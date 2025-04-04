@@ -1,0 +1,1 @@
+from .model import prim_encoder_con

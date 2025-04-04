@@ -1,0 +1,12 @@
+dataset: "all"
+data_home: "dataset"
+out_dir: "dataset/preproceessed"
+dynahate:
+  tokenizer_type: "bert-base-uncased"
+  augmentation: null
+ihc:
+  tokenizer_type: "bert-base-uncased"
+  augmentation: "imp"
+sbic:
+  tokenizer_type: "bert-base-uncased"
+  augmentation: "imp"

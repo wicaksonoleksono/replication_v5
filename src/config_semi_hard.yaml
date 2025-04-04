@@ -1,0 +1,52 @@
+data_path: "dataset/preproceessed"
+output_base: "output.triplet"
+seed: !!int 0
+
+encoders:
+  - "bert-base-uncased"
+  - "GroNLP/hateBERT"
+learning_rates:
+  - !!float 2e-5
+lambda_weights:
+  - !!float 0.25
+batch_size: !!int 8
+num_epochs: !!int 6
+data_mains:
+  - name: "ihc"
+    methods:
+      - name: "semi-hard"
+        fallback: [!!bool true]
+        margins: [!!float 0.3, !!float 0.4, !!float 0.45]
+        reducers:
+          - name: "softmax"
+            beta_values: [!!int 15, !!int 5, !!int 10]
+          - name: "adapt_softmax"
+            beta_values: [!!int 15, !!int 5, !!int 10]
+          - name: "sum"
+          - name: "mean"
+
+  - name: "sbic"
+    methods:
+      - name: "semi-hard"
+        fallback: [!!bool true]
+        margins: [!!float 0.3, !!float 0.4, !!float 0.45]
+        reducers:
+          - name: "softmax"
+            beta_values: [!!int 5, !!int 10, !!int 15]
+          - name: "adapt_softmax"
+            beta_values: [!!int 5, !!int 10, !!int 15]
+          - name: "sum"
+          - name: "mean"
+# Learning rates      : 2e-5
+# reducers            : softmax
+# lambda weights      : 0.25
+
+# Fallback            : True
+
+# IHC   #
+# beta                : 15
+# Margin              : 0.3
+
+# SBIC  #
+# beta                : 5
+# Margin              : 0.45
