@@ -6,12 +6,9 @@ from torch import nn
 import torch 
 import re 
 no_deprecation_warning=True
-from modules import (get_dataloader,
-                     get_dataloader_sbic,
-                     get_dataloader_dynahate)
-
 from modules import Metrics
 from modules import plot_confusion_matrix,plot_tsne
+from tqdm import tqdm
 import numpy as np 
 def evaluate(
     device,
@@ -114,9 +111,7 @@ def train(device,
     model.train()
     metrics.reset()  # Reset metrics at the start of each epoch
     total_loss = 0
-    progress_bar = tqdm(train_loader,
-                        desc=f"Epoch {epoch} Progress", 
-                        unit="batch")
+    progress_bar = tqdm(train_loader,desc=f"Epoch {epoch} Progress", unit="batch")
     for idx, batch in enumerate(progress_bar):
         text = batch["post"].to(device)
         attn = batch["post_attn_mask"].to(device)
@@ -130,14 +125,12 @@ def train(device,
         _, ag_feat = model.get_cls_features_ptrnsp(ag_text, ag_attn)
         pred = model(og_hidden)
         ce = ce_fn(pred, og_label) 
-        if method =="semi":
+        if method =="semi-hard":
             metric_loss = metric_fn(og_feat,ag_feat,og_label)
         if method =="contrastive":
             sup_feat = torch.cat([og_feat, ag_feat])
             metric_loss=metric_fn(sup_feat)
         loss = lam * ce + (1 - lam) * metric_loss
-
-        
         # Update progress bar with current losses
         progress_bar.set_postfix({
             "mixed Loss": f"{loss.item():.4f}",
@@ -169,7 +162,6 @@ def train(device,
         is_validation=False
     )
     avg_loss_valid,computed_valid_metrics=evaluate(device=device,epoch=epoch, data_iter=val_loader, model=model, ce_fn=ce_fn, tracker=tracker, optimizer=optimizer,is_testing=False)
-    optimizer=None,
     print(f"Epoch {epoch} completed. \n"
         f"Training Loss: {avg_train_loss:.4f}, \n"
         f"Validation Loss: {avg_loss_valid:.4f}, \n"

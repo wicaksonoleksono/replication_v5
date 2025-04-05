@@ -1,5 +1,5 @@
 data_path: "dataset/preproceessed"
-output_base: "output.contrastive"
+output_base: "output"
 seed: !!int 0
 encoders:
   - "bert-base-uncased"

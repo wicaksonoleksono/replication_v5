@@ -24,7 +24,6 @@ def get_dataloader(train_batch_size,
 
     else:
         raise NotImplementedError
-    
     # Create DataLoaders
     train_iter = torch.utils.data.DataLoader(
         train_dataset, batch_size=train_batch_size, shuffle=True, 

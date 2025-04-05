@@ -3,7 +3,8 @@ import torch.nn as nn
 from torch.nn import functional as F
 import math
 class SentenceTriplet(nn.Module):
-    def __init__(self, margin=0.5, reducers="mean", use_fallback=True,beta=5):
+
+    def __init__(self, margin, reducers, use_fallback,beta):
         """
         :param margin: Triplet margin
         :param reducers: Which reducer to use: "mean", "sum", or "adaptive"

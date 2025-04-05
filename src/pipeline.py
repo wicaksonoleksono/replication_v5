@@ -10,7 +10,8 @@ from modules import (set_seed,
                      HistoryTracker,
                      TrainingVisualizer)
 import torch
-from transformers import AdamW,get_linear_schedule_with_warmup
+from torch.optim import AdamW
+from transformers import get_linear_schedule_with_warmup
 from torch import nn
 import os
 import re
@@ -40,13 +41,14 @@ def pipeline(
     set_seed(seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if data_main == "ihc":
-        train_iter,valid_iter,ihc_test= get_dataloader(train_batch_size=batch_size,eval_batch_size=batch_size,w_aug="imp",seed=seed,data_path=data_path)
-        _,_,sbic_test= get_dataloader_sbic(train_batch_size=batch_size,eval_batch_size=batch_size,w_aug="imp",seed=seed,data_path=data_path)
-        _,_,dyna_test= get_dataloader_dynahate(train_batch_size=batch_size,eval_batch_size=batch_size,data_path=data_path)
+        train_iter,valid_iter,ihc_test= get_dataloader(train_batch_size=batch_size,eval_batch_size=batch_size,w_aug="imp",seed=seed,base_data_path=data_path)
+        _,_,sbic_test= get_dataloader_sbic(train_batch_size=batch_size,eval_batch_size=batch_size,w_aug="imp",seed=seed,base_data_path=data_path)
+        _,_,dyna_test= get_dataloader_dynahate(train_batch_size=batch_size,eval_batch_size=batch_size,base_data_path=data_path)
     else:
-        train_iter,valid_iter,ihc_test= get_dataloader_sbic(train_batch_size=batch_size,eval_batch_size=batch_size,w_aug="imp",seed=seed,data_path=data_path)
-        _,_,ihc_test= get_dataloader(train_batch_size=batch_size,eval_batch_size=batch_size,w_aug="imp",seed=seed,data_path=data_path)
-        _,_,dyna_test= get_dataloader_dynahate(train_batch_size=batch_size,eval_batch_size=batch_size,data_path=data_path)
+        train_iter,valid_iter,ihc_test= get_dataloader_sbic(train_batch_size=batch_size,eval_batch_size=batch_size,w_aug="imp",seed=seed,base_data_path=data_path)
+        _,_,ihc_test= get_dataloader(train_batch_size=batch_size,eval_batch_size=batch_size,w_aug="imp",seed=seed,base_data_path=data_path)
+        _,_,dyna_test= get_dataloader_dynahate(train_batch_size=batch_size,eval_batch_size=batch_size,base_data_path=data_path)
+
     encoder_short_name = "bert" if "bert-base-uncased" in encoder_name else "hatebert"
     if method == "contrastive":
         output_path = (f"{output_base}.{method}/{data_main}_{encoder_short_name}_lr{learning_rate}_lam{lambda_weight}_temp{temperature}")
@@ -83,24 +85,20 @@ def pipeline(
     start_epoch = 1
     latest_checkpoint = tracker.get_latest_checkpoint()
     if latest_checkpoint:
-        try:
-            match = re.search(r'epoch_?(\d+)', latest_checkpoint)
-            if match:
-                checkpoint_epoch = int(match.group(1))
-                start_epoch = checkpoint_epoch + 1
-            else:
-                raise ValueError("Invalid checkpoint name format")
-            model, optimizer, checkpoint_epoch, loaded_components = tracker.load_model(
-                latest_checkpoint,
-                model,
-                optimizer,
-                model_momentum= None,
-                lr_scheduler=lr_scheduler 
-            )
-            print(f"✅ Resuming from epoch {checkpoint_epoch} (training from {start_epoch})")
-        except Exception as e:
-            print(f"⚠️ Failed to load checkpoint: {e}")
-            start_epoch = 0
+        match = re.search(r'epoch_?(\d+)', latest_checkpoint)
+        if match:
+            checkpoint_epoch = int(match.group(1))
+            start_epoch = checkpoint_epoch + 1
+        else:
+            raise ValueError("Invalid checkpoint name format")
+        model, optimizer, checkpoint_epoch= tracker.load_model(
+            latest_checkpoint,
+            model,
+            optimizer,
+            # lr_scheduler=lr_scheduler 
+        )
+        print(f"✅ Resuming from epoch {checkpoint_epoch} (training from {start_epoch})")
+      
     else:
         print("⭐ No checkpoints found - starting from scratch")
     if start_epoch >= num_epochs:
@@ -124,9 +122,9 @@ def pipeline(
             tracker=tracker, 
             metrics=metrics
         )
-    if tracker.best_f1_score(epoch,current_f1,model,optimizer):
-        print(f"🏆 New best model at epoch {epoch} with F1: {current_f1:.4f}")
-    tracker.save()
+        if tracker.best_f1_score(epoch,current_f1,model,optimizer):
+            print(f"🏆 New best model at epoch {epoch} with F1: {current_f1:.4f}")
+        tracker.save()
     print(f"💾 Saved checkpoint and metrics for epoch {epoch}")
     visualizer = TrainingVisualizer(tracker.history)
     visualizer.plot_metrics(output_path)

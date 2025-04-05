@@ -27,13 +27,11 @@ class HistoryTracker:
         """Load model and optionally optimizer state"""
         checkpoint = torch.load(path, map_location="cuda" if torch.cuda.is_available() else "cpu")
         model.load_state_dict(checkpoint["model_state"])
-        
         if optimizer and "optimizer_state" in checkpoint:
             optimizer.load_state_dict(checkpoint["optimizer_state"])
         
         if "history" in checkpoint:
             self.history = checkpoint["history"]
-            
         return model, optimizer, checkpoint.get("epoch", 0)
     def update_loss(self, epoch, batch_idx, mixed_loss, ce_loss, metric_loss):
         """Update batch-level losses"""

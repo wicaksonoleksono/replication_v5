@@ -5,8 +5,9 @@ from itertools import product
 from modules import update_progress,load_progress,reset_progress,set_seed
 from pipeline import pipeline
 def parse_args(args=None):
-    parser=argparse.ArgumentParser()
-    parser.add_argument("--config",type=str,required=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", type=str, required=True)
+    return parser.parse_args(args)
 def load_config(config_path):
     with open(config_path, "r") as f:
         return yaml.safe_load(f)
@@ -21,13 +22,10 @@ def main(args=None):
     
     encoders=config.get("encoders") # str
     learning_rates=config.get("learning_rates") #float64
-    batch_size = config.get("batch_sizes") #int
+    batch_size = config.get("batch_size") #int
     lambda_weights=config.get("lambda_weights") #float64
     num_epochs=config.get("num_epochs") # int
-    seed = config.get("seed")
-
-    os.makedirs(output_base,exist_ok=True)
-    progress_path=os.path.join(output_base,"progress.json")
+    seed = config.get("seed") #seed
     # 2. Parse datamains+methods 
     data_mains_config = config.get("data_mains")
     all_combinations = []
@@ -62,7 +60,7 @@ def main(args=None):
             elif method_name == "semi-hard":
                 fallback_vals = method_dict.get("fallback")
                 margins = method_dict.get("margins")
-                reducers_list = method_dict.get("reducers" )
+                reducers_list = method_dict.get("reducers")
                 # ------------------------------------------------------
                 #   SEMI-HARD: product of (encoders, lr, lam, margins, fallback, reducers, possibly beta)
                 # ------------------------------------------------------
@@ -81,6 +79,7 @@ def main(args=None):
                     combo = {
                         "data_main": data_main_name,
                         "method": method_name,
+                        
                         "encoder": enc,
                         "learning_rate": lr,
                         "lambda_weight": lam,
@@ -95,7 +94,32 @@ def main(args=None):
                         "beta": beta_val
                     }
                     all_combinations.append(combo)
-            # You could have more elif blocks for other method names (For replication)
+    for combo in all_combinations:
+        assert combo["encoder"] == "bert-base-uncased" or "GroNLP/hateBERT", f"Expected encoder to be 'bert-base-uncased', got {combo['encoder']}"
+        assert combo["learning_rate"] == 2e-5, f"Expected learning_rate to be 2e-05, got {combo['learning_rate']}"
+        assert 0.25 <= combo["lambda_weight"] <= 0.90, f"Expected lambda_weight to be in the range (0.25, 0.90), got {combo['lambda_weight']}"
+        assert combo["batch_size"] in [8, 16, 32], f"Expected batch_size to be one of [8, 16, 32], got {combo['batch_size']}"
+        assert 0 <= combo["num_epochs"] <= 6, f"Expected num_epochs to be in the range [0, 6], got {combo['num_epochs']}"
+        assert isinstance(combo["output_base"], str), f"Expected output_base to be a string, got {type(combo['output_base'])}"
+        # Check method-specific parameters
+        if combo["method"] == "semi-hard":
+            assert 0.3 <= combo["margin"] <= 0.5, f"Expected margin to be in the range (0.3, 0.5), got {combo['margin']}"
+            assert isinstance(combo["fallback"], bool), f"Expected fallback to be a boolean, got {combo['fallback']}"
+            assert combo["reducer"] in ["mean", "sum", "softmax"], f"Expected reducer_name to be one of ['mean', 'sum', 'softmax'], got {combo['reducer_name']}"
+            assert 5 <= combo["beta"] <= 15, f"Expected beta to be in the range (5, 15), got {combo['beta']}"
+            if combo["reducer"] == "softmax":
+                assert 5 <= combo["beta"] <= 15  #   required for softmax
+            else:
+                assert combo["beta"] is None  # Beta must be unused
+        elif combo["method"] == "contrastive":
+            # For contrastive, temperatures must equal exactly 0.3
+            assert combo["temperature"] == 0.3, f"Expected temperatures to be 0.3 for contrastive method, got {combo['temperatures']}"
+
+        else:
+            raise ValueError(f"Unsupported method: {combo['method']}")
+
+    os.makedirs(f"{output_base}.{method_name}",exist_ok=True)
+    progress_path=os.path.join(f"{output_base}.{method_name}","progress.json")
     total_combos = len(all_combinations)
     print(f"Found {total_combos} total combinations to run.")
     progress_data = load_progress(progress_path)
@@ -112,6 +136,7 @@ def main(args=None):
         combo = all_combinations[idx]
         print(
             f"\n=== Combo {idx + 1}/{total_combos} ===\n"
+            f"num epoch={combo['num_epochs']} | seed={seed} | batch_size={combo['batch_size']}|"
             f"data_main={combo['data_main']} | method={combo['method']} | encoder={combo['encoder']} | "
             f"learning_rate={combo['learning_rate']} | lambda_weight={combo['lambda_weight']}\n"
             f"temperature={combo['temperature']} | margin={combo['margin']} | fallback={combo['fallback']} | "
@@ -122,7 +147,6 @@ def main(args=None):
         output_base=combo["output_base"],
         data_main=combo["data_main"],
         seed=seed,
-
 
         encoder_name=combo["encoder"],
         learning_rate=combo["learning_rate"],
@@ -141,10 +165,12 @@ def main(args=None):
         )
         progress_data["last_completed_index"] = idx
         update_progress(progress_data, progress_path)
-        # 6. If we finished all combos, optionally reset progress
     # ------------------------------------------------------
     if progress_data["last_completed_index"] >= total_combos - 1:
         print("\nAll combinations have completed successfully!")
         reset_progress(progress_path)
 if __name__ == "__main__":
     main()
+
+
+    

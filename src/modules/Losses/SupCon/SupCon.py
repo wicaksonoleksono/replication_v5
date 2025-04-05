@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 ### Credits https://github.com/HobbitLong/SupContrast
 class SupConLoss(nn.Module):
-    def __init__(self, temperature=0.07):
+    def __init__(self, temperature):
         super(SupConLoss, self).__init__()
         self.temperature = temperature
     def forward(self, features, labels=None, mask=None):
