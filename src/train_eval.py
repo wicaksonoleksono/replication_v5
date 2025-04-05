@@ -169,7 +169,7 @@ def train(device,
         f"Validation Accuracy: {computed_valid_metrics['accuracy']:.2%}, \n"
         f"Training F1 Score: {computed_train_metrics['f1_macro']:.2%}, \n"
         f"Validation F1 Score: {computed_valid_metrics['f1_macro']:.2%}\n")
-    tracker.save_model(model, optimizer, epoch)
+    tracker.save_model(model, optimizer, epoch,lr_scheduler)
     tracker.save()
     return computed_valid_metrics["f1_macro"]
 

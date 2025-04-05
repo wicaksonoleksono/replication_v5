@@ -78,6 +78,7 @@ def pipeline(
         num_training_steps=num_training_steps
     )
     # Building model initializing losses and such . 
+
     metrics = Metrics()
     tracker = HistoryTracker.load(output_path) 
     if tracker.history["best"]["f1_macro"] is None:
@@ -91,20 +92,16 @@ def pipeline(
             start_epoch = checkpoint_epoch + 1
         else:
             raise ValueError("Invalid checkpoint name format")
-        model, optimizer, checkpoint_epoch= tracker.load_model(
-            latest_checkpoint,
-            model,
-            optimizer,
-            # lr_scheduler=lr_scheduler 
-        )
+        model, optimizer, checkpoint_epoch,lr_scheduler= tracker.load_model(latest_checkpoint,model,optimizer,lr_scheduler=lr_scheduler)
         print(f"✅ Resuming from epoch {checkpoint_epoch} (training from {start_epoch})")
-      
     else:
         print("⭐ No checkpoints found - starting from scratch")
+        start_epoch=1
+
     if start_epoch >= num_epochs:
         print(f"⚠️ Training already completed (epoch {start_epoch-1}/{num_epochs})")
         return
-    for epoch in range(1,num_epochs+1):
+    for epoch in range(start_epoch,num_epochs+1):
         print(f"\n🚀 Epoch {epoch}/{num_epochs}")
         current_f1=train(
             device=device,

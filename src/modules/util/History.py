@@ -12,27 +12,54 @@ class HistoryTracker:
             "best": {"f1_macro": -1, "epoch": -1,"path": None}
         }
         os.makedirs(output_path, exist_ok=True)
-    def save_model(self, model, optimizer, epoch):
+    def _cleanup_old_checkpoints(self, current_epoch):
+        checkpoints = [
+            f for f in os.listdir(self.output_path)
+            if f.startswith("epoch_") and f.endswith(".pth")
+        ]
+        protected = {
+            f"epoch_{current_epoch}.pth",
+            os.path.basename(self.history["best"]["path"]) if self.history["best"]["path"] else ""
+        }
+        for checkpoint in checkpoints:
+            if checkpoint not in protected:
+                try:
+                    os.remove(os.path.join(self.output_path, checkpoint))
+                    print(f"🗑️ Deleted old checkpoint: {checkpoint}")
+                except Exception as e:
+                    print(f"⚠️ Failed to delete {checkpoint}: {e}")
+
+
+    def save_model(self, model, optimizer, epoch,lr_scheduler):
         """Save model and optimizer state"""
+        self._cleanup_old_checkpoints(epoch)
         checkpoint = {
             "epoch": epoch,
             "model_state": model.state_dict(),
             "optimizer_state": optimizer.state_dict(),
+            "lr_scheduler_state": lr_scheduler.state_dict(),  # Changed key name for consistency
             "history": self.history
         }
         path = os.path.join(self.output_path, f"epoch_{epoch}.pth")
         torch.save(checkpoint, path)
         return path
-    def load_model(self, path, model, optimizer=None):
+    
+    def load_model(self, path, model, optimizer=None,lr_scheduler=None):
         """Load model and optionally optimizer state"""
         checkpoint = torch.load(path, map_location="cuda" if torch.cuda.is_available() else "cpu")
         model.load_state_dict(checkpoint["model_state"])
+        print(f"loaded epoch {path}")
         if optimizer and "optimizer_state" in checkpoint:
             optimizer.load_state_dict(checkpoint["optimizer_state"])
-        
+            print("Optimizer found")
+        if lr_scheduler and "lr_scheduler_state" in checkpoint:
+            lr_scheduler.load_state_dict(checkpoint["lr_scheduler_state"])
+            print("learning rate scheduler found")
         if "history" in checkpoint:
             self.history = checkpoint["history"]
-        return model, optimizer, checkpoint.get("epoch", 0)
+            
+        return model, optimizer, checkpoint.get("epoch", 0),lr_scheduler
+    
     def update_loss(self, epoch, batch_idx, mixed_loss, ce_loss, metric_loss):
         """Update batch-level losses"""
         epoch_key = f"epoch_{epoch}"
@@ -98,18 +125,32 @@ class HistoryTracker:
             self.save()
             return True
         return False
+    
     def save(self):
         """Save history to JSON"""
         path = os.path.join(self.output_path, "training_history.json")
         with open(path, "w") as f:
             json.dump(self.history, f, indent=2)
         return path
+    
     def get_latest_checkpoint(self):
-        checkpoints = [f for f in os.listdir(self.output_path) 
-                    if f.startswith("epoch_") and "best" not in f]
+        """Returns most recent epoch checkpoint (if exists)"""
+        checkpoints = [
+            f for f in os.listdir(self.output_path)
+            if f.startswith("epoch_") and f.endswith(".pth")
+        ]
         if not checkpoints:
             return None
-        epochs = [int(f.split("_")[1].split(".")[0]) for f in checkpoints]
+        epochs = []
+        for f in checkpoints:
+            try:
+                epochs.append(int(f.split("_")[1].split(".")[0]))
+            except (IndexError, ValueError):
+                continue
+                
+        if not epochs:
+            return None
+            
         latest_epoch = max(epochs)
         return os.path.join(self.output_path, f"epoch_{latest_epoch}.pth")
     @classmethod

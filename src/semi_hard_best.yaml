@@ -13,12 +13,12 @@ data_mains:
   - name: "ihc"
     methods:
       - name: "semi-hard"
-        fallback: [!!bool true]
         margins: [!!float 0.3]
+        fallback: [!!bool true]
         reducers:
           - name: "softmax"
             beta_values: [!!int 15]
-  # - name: "sbic"
+    # - name: "sbic"
   #   methods:
   #     - name: "semi-hard"
   #       fallback: [!!bool true]

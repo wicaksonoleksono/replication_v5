@@ -58,24 +58,26 @@ def main(args=None):
                     }
                     all_combinations.append(combo)
             elif method_name == "semi-hard":
-                fallback_vals = method_dict.get("fallback")
-                margins = method_dict.get("margins")
-                reducers_list = method_dict.get("reducers")
-                # ------------------------------------------------------
-                #   SEMI-HARD: product of (encoders, lr, lam, margins, fallback, reducers, possibly beta)
-                # ------------------------------------------------------
+                fallback_vals = method_dict["fallback"]
+                margins = method_dict["margins"]
+                reducers_list = method_dict["reducers"]
+                
                 all_reducer_beta_pairs = []
                 for r in reducers_list:
                     if isinstance(r, dict):
-                        reducer_name = r["name"]
-                        for b in r.get("beta_values", [None]):
-                            all_reducer_beta_pairs.append((reducer_name, b))
+                        for b in r["beta_values"]:
+                            all_reducer_beta_pairs.append( (r["name"], b) )
                     else:
-                        all_reducer_beta_pairs.append((r, None))
+                        all_reducer_beta_pairs.append( (r, None) )
 
-                for (enc, lr, lam, fb, marg, (reducer_name, beta_val)) in product(
-                    encoders, learning_rates, lambda_weights, fallback_vals, margins, all_reducer_beta_pairs
-                ):
+                for (enc, lr, marg, lam, fb, (reducer_name, beta_val)) in product(
+                        encoders, 
+                        learning_rates, 
+                        margins,          
+                        lambda_weights,   
+                        fallback_vals, 
+                        all_reducer_beta_pairs
+                    ):
                     combo = {
                         "data_main": data_main_name,
                         "method": method_name,
@@ -95,30 +97,28 @@ def main(args=None):
                     }
                     all_combinations.append(combo)
     for combo in all_combinations:
-        assert combo["encoder"] == "bert-base-uncased" or "GroNLP/hateBERT", f"Expected encoder to be 'bert-base-uncased', got {combo['encoder']}"
+        method_dir = f"{combo['output_base']}.{combo['method']}"
+        os.makedirs(method_dir, exist_ok=True)
+        progress_path = os.path.join(method_dir, "progress.json")
+        assert combo["encoder"] in ["bert-base-uncased", "GroNLP/hateBERT"], f"Expected encoder to be one of ['bert-base-uncased', 'GroNLP/hateBERT'], got {combo['encoder']}"        
         assert combo["learning_rate"] == 2e-5, f"Expected learning_rate to be 2e-05, got {combo['learning_rate']}"
-        assert 0.25 <= combo["lambda_weight"] <= 0.90, f"Expected lambda_weight to be in the range (0.25, 0.90), got {combo['lambda_weight']}"
+        assert combo["lambda_weight"]==0.25 , f"Expected lambda_weight to be 0.25, got {combo['lambda_weight']}"
         assert combo["batch_size"] in [8, 16, 32], f"Expected batch_size to be one of [8, 16, 32], got {combo['batch_size']}"
         assert 0 <= combo["num_epochs"] <= 6, f"Expected num_epochs to be in the range [0, 6], got {combo['num_epochs']}"
         assert isinstance(combo["output_base"], str), f"Expected output_base to be a string, got {type(combo['output_base'])}"
         # Check method-specific parameters
         if combo["method"] == "semi-hard":
-            assert 0.3 <= combo["margin"] <= 0.5, f"Expected margin to be in the range (0.3, 0.5), got {combo['margin']}"
+            assert combo["margin"] in [0.3,0.4,0.45], f"Expected margin to be in the range (0.3,0.4,0.5), got {combo['margin']}"
             assert isinstance(combo["fallback"], bool), f"Expected fallback to be a boolean, got {combo['fallback']}"
-            assert combo["reducer"] in ["mean", "sum", "softmax"], f"Expected reducer_name to be one of ['mean', 'sum', 'softmax'], got {combo['reducer_name']}"
-            assert 5 <= combo["beta"] <= 15, f"Expected beta to be in the range (5, 15), got {combo['beta']}"
+            assert combo["reducer"] in ["mean", "sum", "softmax"], f"Expected reducer_name to be one of ['mean', 'sum', 'softmax'], got {combo['reducer']}"
             if combo["reducer"] == "softmax":
-                assert 5 <= combo["beta"] <= 15  #   required for softmax
+                assert 5 <= combo["beta"] <= 15, f"Expected beta to be in the range (5, 15), got {combo['beta']}"
             else:
-                assert combo["beta"] is None  # Beta must be unused
+                assert combo["beta"] is None  
         elif combo["method"] == "contrastive":
-            # For contrastive, temperatures must equal exactly 0.3
-            assert combo["temperature"] == 0.3, f"Expected temperatures to be 0.3 for contrastive method, got {combo['temperatures']}"
-
+            assert combo["temperature"] == 0.3, f"Expected temperatures to be 0.3 for contrastive method, got {combo['temperature']}"
         else:
             raise ValueError(f"Unsupported method: {combo['method']}")
-
-    os.makedirs(f"{output_base}.{method_name}",exist_ok=True)
     progress_path=os.path.join(f"{output_base}.{method_name}","progress.json")
     total_combos = len(all_combinations)
     print(f"Found {total_combos} total combinations to run.")
@@ -156,12 +156,12 @@ def main(args=None):
         method=combo["method"],
 
         # triplet loss
-        margin=combo["margin"] if combo["method"] == "semi-hard" else None,
-        beta=combo["beta"] if combo["method"] == "semi-hard" else None,
-        reducer=combo["reducer"] if combo["method"] == "semi-hard" else None,
-        fallback=combo["fallback"] if combo["method"] == "semi-hard" else None,
+        margin=combo["margin"], #if combo["method"] == "semi-hard" else None,
+        beta=combo["beta"], # if combo["method"] == "semi-hard" else None,
+        reducer=combo["reducer"],# if combo["method"] == "semi-hard" else None,
+        fallback=combo["fallback"],# if combo["method"] == "semi-hard" else None,
         # Contrastive
-        temperature=combo["temperature"] if combo["method"] == "contrastive" else None,
+        temperature=combo["temperature"],#if combo["method"] == "contrastive" else None,
         )
         progress_data["last_completed_index"] = idx
         update_progress(progress_data, progress_path)
