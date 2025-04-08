@@ -61,6 +61,8 @@ def main(args=None):
                         "fallback": None,
                         "reducer": None,
                         "beta": None,
+                        "distance_fn": None
+
                     }
                     all_combinations.append(combo)
             elif method_name == "semi-hard":
@@ -98,12 +100,11 @@ def main(args=None):
                         "output_base": output_base,
                         # method-specific
                         "temperature": None,
+
                         "margin": marg,
                         "fallback": fb,
                         "reducer": reducer_name,
                         "beta": beta_val,
-
-                        # ***** Add your new distance function here *****
                         "distance_fn": d_fn
                     }
 
@@ -133,7 +134,7 @@ def main(args=None):
             assert combo["reducer"] in [
                 "mean", "sum", "softmax"], f"Expected reducer_name to be one of ['mean', 'sum', 'softmax'], got {combo['reducer']}"
             assert combo["distance_fn"] in ["angular",
-                                            "cos"], f"expected either angular or cos, got {combo["distance_fn"]}"
+                                            "cos"], f"expected either angular or cos, got {combo['distance_fn']}"
             if combo["reducer"] == "softmax":
                 assert 5 <= combo[
                     "beta"] <= 15, f"Expected beta to be in the range (5, 15), got {combo['beta']}"
@@ -166,7 +167,7 @@ def main(args=None):
             f"data_main={combo['data_main']} | method={combo['method']} | encoder={combo['encoder']} | "
             f"learning_rate={combo['learning_rate']} | lambda_weight={combo['lambda_weight']}\n"
             f"temperature={combo['temperature']} | margin={combo['margin']} | fallback={combo['fallback']} | "
-            f"reducer={combo['reducer']} | beta={combo['beta']}\n"
+            f"reducer={combo['reducer']} | beta={combo['beta']} | dist_fn={combo['distance_fn']}\ n"
         )
         pipeline(
             data_path=data_path,

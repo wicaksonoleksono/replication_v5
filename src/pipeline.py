@@ -57,7 +57,6 @@ def pipeline(
             train_batch_size=batch_size, eval_batch_size=batch_size, w_aug="imp", seed=seed, base_data_path=data_path)
         _, _, dyna_test = get_dataloader_dynahate(
             train_batch_size=batch_size, eval_batch_size=batch_size, base_data_path=data_path)
-
     encoder_short_name = "bert" if "bert-base-uncased" in encoder_name else "hatebert"
     if method == "contrastive":
         output_path = (
@@ -65,10 +64,10 @@ def pipeline(
     elif method == "semi-hard":
         if reducer in ["softmax", "adapt_softmax"]:
             output_path = (
-                f"{output_base}.{method}/{data_main}_{encoder_short_name}_lr{learning_rate}_lam{lambda_weight}_margin{margin}_red{reducer}_b{beta}_fb{fallback}")
+                f"{output_base}.{method}/{data_main}_{encoder_short_name}_lr{learning_rate}_lam{lambda_weight}_margin{margin}_d_fn{d_fn}_red{reducer}_b{beta}_fb{fallback}")
         else:
             output_path = (
-                f"{output_base}.{method}/{data_main}_{encoder_short_name}_lr{learning_rate}_lam{lambda_weight}_margin{margin}")
+                f"{output_base}.{method}/{data_main}_{encoder_short_name}_lr{learning_rate}_lam{lambda_weight}_margin{margin}_d_fn{d_fn}")
     os.makedirs(output_path, exist_ok=True)
     # Building model initializing losses and such .
     model = prim_encoder_con(
