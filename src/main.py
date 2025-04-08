@@ -73,11 +73,24 @@ def main(args=None):
 
                 all_reducer_beta_pairs = []
                 for r in reducers_list:
-                    if isinstance(r, dict):
-                        for b in r["beta_values"]:
-                            all_reducer_beta_pairs.append((r["name"], b))
-                    else:
+                    if isinstance(r, str):
                         all_reducer_beta_pairs.append((r, None))
+                        continue
+                    reducer_names = r["name"]
+                    if isinstance(reducer_names, str):
+                        reducer_names = [reducer_names]
+                    beta_values = r.get("beta_values", [])
+                    for name in reducer_names:
+                        if name in ["softmax", "adapt_softmax"]:
+                            if not beta_values:
+                                all_reducer_beta_pairs.append((name, None))
+                            else:
+                                for b in beta_values:
+                                    all_reducer_beta_pairs.append((name, b))
+                        else:
+                            all_reducer_beta_pairs.append((name, None))
+                print(all_reducer_beta_pairs)
+
                 # You now iterate over `d_fns` as well in the product
                 for (enc, lr, marg, lam, fb, d_fn, (reducer_name, beta_val)) in product(
                     encoders,

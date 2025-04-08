@@ -5,7 +5,6 @@ import math
 
 
 class SentenceTriplet(nn.Module):
-
     def __init__(self, margin, reducers, use_fallback, beta, d_fn):
         super().__init__()
         self.margin = margin
@@ -25,7 +24,7 @@ class SentenceTriplet(nn.Module):
 
     def _angular_distance(self, x, y):
         sim_matrix = self._cosine_sim(x, y)
-        sim_matrix = torch.clamp(sim_matrix, -1.0, 1.0)
+        sim_matrix = torch.clamp(sim_matrix, -1.0 + 1e-6, 1.0 - 1e-6)
         return torch.acos(sim_matrix)
 
     def _mean_reducer(self, loss, valid_count):
@@ -59,7 +58,7 @@ class SentenceTriplet(nn.Module):
         if self.reducers == "mean":
             return self._mean_reducer(loss_terms, valid_count)
         elif self.reducers == "sum":
-            return self._sum_reducer(loss_terms, valid_count)
+            return self._sum_reducer(loss_terms)
         elif self.reducers == "softmax":
             return self._softmax_pooling_reducer(loss_terms)
         elif self.reducers == "adapt_softmax":
@@ -72,7 +71,7 @@ class SentenceTriplet(nn.Module):
         batch_size = og_feat.size(0)
         if self.d_fn == "cos":
             # Distance between anchor and positive
-            d_ap = self._cosine_distance(og_feat, ag_feat).diag()  # diagonal
+            d_ap = self._cosine_distance(og_feat, ag_feat).diag()
             # Distance between anchor and all others
             d_an = self._cosine_distance(og_feat, og_feat)
         elif self.d_fn == "angular":
