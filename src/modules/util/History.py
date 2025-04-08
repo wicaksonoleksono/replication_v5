@@ -3,15 +3,18 @@ import json
 import torch
 from torch import nn
 
+
 class HistoryTracker:
     def __init__(self, output_path):
         self.output_path = output_path
         self.history = {
             "train": {},
             "valid": {},
-            "best": {"f1_macro": -1, "epoch": -1,"path": None}
+            "best": {"f1_macro": -1, "epoch": -1, "path": None},
+            "tested": False
         }
         os.makedirs(output_path, exist_ok=True)
+
     def _cleanup_old_checkpoints(self, current_epoch):
         checkpoints = [
             f for f in os.listdir(self.output_path)
@@ -19,7 +22,8 @@ class HistoryTracker:
         ]
         protected = {
             f"epoch_{current_epoch}.pth",
-            os.path.basename(self.history["best"]["path"]) if self.history["best"]["path"] else ""
+            os.path.basename(
+                self.history["best"]["path"]) if self.history["best"]["path"] else ""
         }
         for checkpoint in checkpoints:
             if checkpoint not in protected:
@@ -29,24 +33,25 @@ class HistoryTracker:
                 except Exception as e:
                     print(f"⚠️ Failed to delete {checkpoint}: {e}")
 
-
-    def save_model(self, model, optimizer, epoch,lr_scheduler):
+    def save_model(self, model, optimizer, epoch, lr_scheduler):
         """Save model and optimizer state"""
         self._cleanup_old_checkpoints(epoch)
         checkpoint = {
             "epoch": epoch,
             "model_state": model.state_dict(),
             "optimizer_state": optimizer.state_dict(),
-            "lr_scheduler_state": lr_scheduler.state_dict(),  # Changed key name for consistency
+            # Changed key name for consistency
+            "lr_scheduler_state": lr_scheduler.state_dict(),
             "history": self.history
         }
         path = os.path.join(self.output_path, f"epoch_{epoch}.pth")
         torch.save(checkpoint, path)
         return path
-    
-    def load_model(self, path, model, optimizer=None,lr_scheduler=None):
+
+    def load_model(self, path, model, optimizer=None, lr_scheduler=None):
         """Load model and optionally optimizer state"""
-        checkpoint = torch.load(path, map_location="cuda" if torch.cuda.is_available() else "cpu")
+        checkpoint = torch.load(
+            path, map_location="cuda" if torch.cuda.is_available() else "cpu")
         model.load_state_dict(checkpoint["model_state"])
         print(f"loaded epoch {path}")
         if optimizer and "optimizer_state" in checkpoint:
@@ -57,9 +62,9 @@ class HistoryTracker:
             print("learning rate scheduler found")
         if "history" in checkpoint:
             self.history = checkpoint["history"]
-            
-        return model, optimizer, checkpoint.get("epoch", 0),lr_scheduler
-    
+
+        return model, optimizer, checkpoint.get("epoch", 0), lr_scheduler
+
     def update_loss(self, epoch, batch_idx, mixed_loss, ce_loss, metric_loss):
         """Update batch-level losses"""
         epoch_key = f"epoch_{epoch}"
@@ -67,14 +72,15 @@ class HistoryTracker:
             self.history["train"][epoch_key] = {
                 "losses": [],
             }
-            
+
         self.history["train"][epoch_key]["losses"].append({
             "batch": batch_idx,
             "mixed_loss": mixed_loss,
             "ce_loss": ce_loss,
             "metric_loss": metric_loss
         })
-    def update_metrics(self, epoch,avg_loss ,acc, f1_m,f1_w, precision, recall, is_validation=False):
+
+    def update_metrics(self, epoch, avg_loss, acc, f1_m, f1_w, precision, recall, is_validation=False):
         """Update epoch-level metrics"""
         epoch_key = f"epoch_{epoch}"
         target = "valid" if is_validation else "train"
@@ -83,11 +89,12 @@ class HistoryTracker:
         self.history[target][epoch_key].update({
             "acc": acc,
             "f1_weighted": f1_w,
-            "f1_macro":f1_m,
+            "f1_macro": f1_m,
             "precision": precision,
             "recall": recall,
-            "average_loss":avg_loss,
+            "average_loss": avg_loss,
         })
+
     def best_f1_score(self, epoch, current_f1, model, optimizer):
         """Save best model and delete previous best if exists"""
         if current_f1 is None or not isinstance(current_f1, (int, float)):
@@ -103,12 +110,14 @@ class HistoryTracker:
             if previous_best and os.path.exists(previous_best):
                 try:
                     os.remove(previous_best)
-                    print(f"🗑️ Deleted previous best: {os.path.basename(previous_best)}")
+                    print(
+                        f"🗑️ Deleted previous best: {os.path.basename(previous_best)}")
                 except Exception as e:
                     print(f"⚠️ Failed to delete previous best: {e}")
-            
+
             # Save new best model
-            best_path = os.path.join(self.output_path, f"best_epoch_{epoch}.pth")
+            best_path = os.path.join(
+                self.output_path, f"best_epoch_{epoch}.pth")
             torch.save({
                 "epoch": epoch,
                 "model_state": model.state_dict(),
@@ -125,14 +134,14 @@ class HistoryTracker:
             self.save()
             return True
         return False
-    
+
     def save(self):
         """Save history to JSON"""
         path = os.path.join(self.output_path, "training_history.json")
         with open(path, "w") as f:
             json.dump(self.history, f, indent=2)
         return path
-    
+
     def get_latest_checkpoint(self):
         """Returns most recent epoch checkpoint (if exists)"""
         checkpoints = [
@@ -147,12 +156,13 @@ class HistoryTracker:
                 epochs.append(int(f.split("_")[1].split(".")[0]))
             except (IndexError, ValueError):
                 continue
-                
+
         if not epochs:
             return None
-            
+
         latest_epoch = max(epochs)
         return os.path.join(self.output_path, f"epoch_{latest_epoch}.pth")
+
     @classmethod
     def load(cls, output_path):
         instance = cls(output_path)
@@ -166,9 +176,12 @@ class HistoryTracker:
                     "best": {
                         **instance.history["best"],  # Defaults
                         **loaded_history.get("best", {})  # Loaded values
-                    }
+                    },
+                    "tested": loaded_history.get("tested", False)
                 }
         # Ensure numeric types after loading
+        if "tested" not in instance.history:
+            instance.history["tested"] = False
         if not isinstance(instance.history["best"].get("f1_macro"), (int, float)):
             instance.history["best"]["f1_macro"] = -1
         if not isinstance(instance.history["best"].get("epoch"), int):

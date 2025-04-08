@@ -208,6 +208,7 @@ def main(args=None):
             # if combo["method"] == "contrastive" else None,
             temperature=combo["temperature"],
         )
+
         progress_data["last_completed_index"] = idx
         update_progress(progress_data, progress_path)
     # ------------------------------------------------------

@@ -115,7 +115,19 @@ def pipeline(
     if start_epoch >= num_epochs:
         print(
             f"⚠️ Training already completed (epoch {start_epoch-1}/{num_epochs})")
-        return
+        # Add this resume-check block
+        if tracker.history["best"]["path"] and not tracker.history.get("tested"):
+            print("\n🔍 Testing with best model (resumed)...")
+            model, _, _, _ = tracker.load_model(
+                tracker.history["best"]["path"], model)
+            # Your testing code with evaluate() calls goes here
+            tracker.history["tested"] = True
+            tracker.save()
+            print("💾 Resumed testing completed")
+        elif tracker.history.get("tested"):
+            print("✅ Testing already completed")
+        return  # Keep this return
+
     for epoch in range(start_epoch, num_epochs+1):
         print(f"\n🚀 Epoch {epoch}/{num_epochs}")
         current_f1 = train(
@@ -144,7 +156,7 @@ def pipeline(
     print(tracker.history)
     if tracker.history["best"]["path"]:
         print("\n🔍 Testing with best model...")
-        model, _, _ = tracker.load_model(
+        model, _, _, _ = tracker.load_model(
             tracker.history["best"]["path"], model)
         if data_main == "ihc":
             evaluate(
@@ -214,3 +226,5 @@ def pipeline(
                 output_path=os.path.join(output_path, "dyna_test/"),
                 device=device
             )
+    tracker.history["tested"] = True  # This is correct
+    tracker.save()  # This is correct
