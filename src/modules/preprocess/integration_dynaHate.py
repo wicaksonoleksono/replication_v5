@@ -3,7 +3,6 @@ import pandas as pd
 
 class integration_dyna:
     def __init__(self, load_dir="dataset/DynaHate", dataset_filename="DynaHate_v0.2.2.csv"):
-
         self.load_dir = load_dir
         self.dataset_filename = dataset_filename
         self.dataset_path = os.path.join(self.load_dir, self.dataset_filename)

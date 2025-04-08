@@ -15,6 +15,7 @@ data_mains:
   - name: "ihc"
     methods:
       - name: "semi-hard"
+        d_fn: ["angular", "cos"]
         fallback: [!!bool true]
         margins: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:
@@ -28,6 +29,7 @@ data_mains:
   - name: "sbic"
     methods:
       - name: "semi-hard"
+      - d_fn: ["angular", "cos"]
         fallback: [!!bool true]
         margins: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:

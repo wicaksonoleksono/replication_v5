@@ -1,2 +1,2 @@
-from .SupCon import SupConLoss,DCL,DCLW
-from .Triplet import SentenceTriplet,SoftTripleLoss
+from .SupCon import SupConLoss
+from .Triplet import SentenceTriplet
