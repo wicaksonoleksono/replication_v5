@@ -4,3 +4,5 @@ conda activate <env_name>```
 ````
 
 python main.py --config "\*.yaml"
+
+python preprocess.py --config "./config_preprocess.yaml"

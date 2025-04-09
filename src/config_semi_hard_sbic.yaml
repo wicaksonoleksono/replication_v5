@@ -12,24 +12,10 @@ lambda_weights:
 batch_size: !!int 8
 num_epochs: !!int 6
 data_mains:
-  - name: "ihc"
-    methods:
-      - name: "semi-hard"
-        d_fn: ["angular", "cos"]
-        fallback: [!!bool true]
-        margins: [!!float 0.3, !!float 0.4, !!float 0.45]
-        reducers:
-          - name: "softmax"
-            beta_values: [!!int 15, !!int 5, !!int 10]
-          - name: "adapt_softmax"
-            beta_values: [!!int 15, !!int 5, !!int 10]
-          - name: "sum"
-          - name: "mean"
-
   - name: "sbic"
     methods:
       - name: "semi-hard"
-      - d_fn: ["angular", "cos"]
+        d_fn: ["angular", "cos"]
         fallback: [!!bool true]
         margins: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:

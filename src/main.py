@@ -122,44 +122,47 @@ def main(args=None):
                     }
 
                     all_combinations.append(combo)
+
     for combo in all_combinations:
-        method_dir = f"{combo['output_base']}.{combo['method']}"
+        method_dir = f"{combo['output_base']}.{combo['method']}.{combo['data_main']}"
         os.makedirs(method_dir, exist_ok=True)
         progress_path = os.path.join(method_dir, "progress.json")
-        assert combo["encoder"] in ["bert-base-uncased",
-                                    "GroNLP/hateBERT"], f"Expected encoder to be one of ['bert-base-uncased', 'GroNLP/hateBERT'], got {combo['encoder']}"
-        assert combo[
-            "learning_rate"] == 2e-5, f"Expected learning_rate to be 2e-05, got {combo['learning_rate']}"
-        assert combo[
-            "lambda_weight"] == 0.25, f"Expected lambda_weight to be 0.25, got {combo['lambda_weight']}"
-        assert combo["batch_size"] in [
-            8, 16, 32], f"Expected batch_size to be one of [8, 16, 32], got {combo['batch_size']}"
-        assert 0 <= combo[
-            "num_epochs"] <= 6, f"Expected num_epochs to be in the range [0, 6], got {combo['num_epochs']}"
-        assert isinstance(
-            combo["output_base"], str), f"Expected output_base to be a string, got {type(combo['output_base'])}"
+        assert combo["encoder"] in ["bert-base-uncased", "GroNLP/hateBERT"], \
+            f"Expected encoder to be one of ['bert-base-uncased', 'GroNLP/hateBERT'], got {combo['encoder']}"
+        assert combo["learning_rate"] == 2e-5, \
+            f"Expected learning_rate to be 2e-05, got {combo['learning_rate']}"
+        assert combo["lambda_weight"] == 0.25, \
+            f"Expected lambda_weight to be 0.25, got {combo['lambda_weight']}"
+        assert combo["batch_size"] in [8, 16, 32], \
+            f"Expected batch_size to be one of [8, 16, 32], got {combo['batch_size']}"
+        assert 0 <= combo["num_epochs"] <= 6, \
+            f"Expected num_epochs to be in the range [0, 6], got {combo['num_epochs']}"
+        assert isinstance(combo["output_base"], str), \
+            f"Expected output_base to be a string, got {type(combo['output_base'])}"
         # Check method-specific parameters
         if combo["method"] == "semi-hard":
-            assert combo["margin"] in [
-                0.3, 0.4, 0.45], f"Expected margin to be in the range (0.3,0.4,0.5), got {combo['margin']}"
-            assert isinstance(
-                combo["fallback"], bool), f"Expected fallback to be a boolean, got {combo['fallback']}"
-            assert combo["reducer"] in [
-                "mean", "sum", "softmax"], f"Expected reducer_name to be one of ['mean', 'sum', 'softmax'], got {combo['reducer']}"
-            assert combo["distance_fn"] in ["angular",
-                                            "cos"], f"expected either angular or cos, got {combo['distance_fn']}"
-            if combo["reducer"] == "softmax":
-                assert 5 <= combo[
-                    "beta"] <= 15, f"Expected beta to be in the range (5, 15), got {combo['beta']}"
+            assert combo["margin"] in [0.3, 0.4, 0.45], \
+                f"Expected margin to be in [0.3, 0.4, 0.45], got {combo['margin']}"
+            assert isinstance(combo["fallback"], bool), \
+                f"Expected fallback to be a boolean, got {combo['fallback']}"
+            assert combo["reducer"] in ["mean", "sum", "softmax", "adapt_softmax"], \
+                f"Expected reducer to be one of ['mean', 'sum', 'softmax', 'adapt_softmax'], got {combo['reducer']}"
+            assert combo["distance_fn"] in ["angular", "cos"], \
+                f"Expected distance_fn to be either 'angular' or 'cos', got {combo['distance_fn']}"
+            if combo["reducer"] in ["softmax", "adapt_softmax"]:
+                assert 5 <= combo["beta"] <= 15, \
+                    f"Expected beta to be in the range [5, 15], got {combo['beta']}"
             else:
-                assert combo["beta"] is None
+                assert combo["beta"] is None, \
+                    "For reducers other than 'softmax' or 'adapt_softmax', beta must be None."
         elif combo["method"] == "contrastive":
-            assert combo[
-                "temperature"] == 0.3, f"Expected temperatures to be 0.3 for contrastive method, got {combo['temperature']}"
+            assert combo["temperature"] == 0.3, \
+                f"Expected temperature to be 0.3 for contrastive method, got {combo['temperature']}"
         else:
             raise ValueError(f"Unsupported method: {combo['method']}")
+
     progress_path = os.path.join(
-        f"{output_base}.{method_name}", "progress.json")
+        f"{output_base}.{method_name}.{data_main_name}", "progress.json")
     total_combos = len(all_combinations)
     print(f"Found {total_combos} total combinations to run.")
     progress_data = load_progress(progress_path)
