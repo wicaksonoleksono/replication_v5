@@ -20,6 +20,7 @@ import pandas as pd
 import numpy as np
 import os
 
+
 class TrainingVisualizer:
     def __init__(self, history):
         self.history = history
@@ -35,19 +36,20 @@ class TrainingVisualizer:
     def plot_metrics(self, output_path):
         """Generate separate plots for each metric with specified configurations"""
         os.makedirs(output_path, exist_ok=True)
-        
+
         # Prepare epoch-level data
         train_metrics, valid_metrics = self._prepare_epoch_data()
-        
+
         # Generate plots for each metric
         for metric in self.metrics:
             plt.figure(figsize=(18, 12))
-            
+
             if metric == 'loss':
                 self._plot_loss(plt, train_metrics, valid_metrics)
             else:
-                self._plot_standard_metric(plt, metric, train_metrics, valid_metrics)
-            
+                self._plot_standard_metric(
+                    plt, metric, train_metrics, valid_metrics)
+
             plot_path = os.path.join(output_path, f'{metric}_plot.png')
             plt.savefig(plot_path, bbox_inches='tight', dpi=300)
             plt.close()
@@ -58,20 +60,22 @@ class TrainingVisualizer:
         train_metrics = []
         valid_metrics = []
         epochs = sorted(
-            [int(k.split('_')[1]) for k in self.history['train'] if k.startswith('epoch_')],
+            [int(k.split('_')[1])
+             for k in self.history['train'] if k.startswith('epoch_')],
             key=lambda x: x
         )
 
         for epoch in epochs:
             epoch_key = f'epoch_{epoch}'
-            
+
             # Train metrics
             train_data = self.history['train'][epoch_key]
             # Calculate average training loss
             batches = train_data.get('losses', [])
             ce_losses = [b['ce_loss'] for b in batches]
-            avg_train_loss = sum(ce_losses) / len(ce_losses) if ce_losses else None
-            
+            avg_train_loss = sum(ce_losses) / \
+                len(ce_losses) if ce_losses else None
+
             train_metrics.append({
                 'epoch': epoch,
                 'acc': train_data.get('acc'),
@@ -97,12 +101,12 @@ class TrainingVisualizer:
     def _plot_loss(self, plt, train_df, valid_df):
         """Plot average training and validation CE loss per epoch"""
         # Plot training CE loss (epoch-level)
-        plt.plot(train_df['epoch'], train_df['average_loss'], 
-                 marker='o', linestyle='-', color='blue', 
+        plt.plot(train_df['epoch'], train_df['average_loss'],
+                 marker='o', linestyle='-', color='blue',
                  linewidth=2, label='Train CE Loss')
         # Plot validation CE loss (epoch-level)
-        plt.plot(valid_df['epoch'], valid_df['average_loss'], 
-                 marker='o', linestyle='--', color='orange', 
+        plt.plot(valid_df['epoch'], valid_df['average_loss'],
+                 marker='o', linestyle='--', color='orange',
                  linewidth=2, label='Validation CE Loss')
 
         plt.title(self.labels['loss'] + ' Evolution')
@@ -114,13 +118,13 @@ class TrainingVisualizer:
 
     def _plot_standard_metric(self, plt, metric, train_df, valid_df):
         """Handle standard epoch-level metrics"""
-        plt.plot(train_df['epoch'], train_df[metric], 
-                marker='o', linestyle='-', linewidth=2, 
-                label=f'Train {self.labels[metric]}')
-        
-        plt.plot(valid_df['epoch'], valid_df[metric], 
-                marker='o', linestyle='--', linewidth=2,
-                label=f'Validation {self.labels[metric]}')
+        plt.plot(train_df['epoch'], train_df[metric],
+                 marker='o', linestyle='-', linewidth=2,
+                 label=f'Train {self.labels[metric]}')
+
+        plt.plot(valid_df['epoch'], valid_df[metric],
+                 marker='o', linestyle='--', linewidth=2,
+                 label=f'Validation {self.labels[metric]}')
 
         plt.title(f'{self.labels[metric]} Evolution')
         plt.xlabel('Epoch')
@@ -128,6 +132,7 @@ class TrainingVisualizer:
         plt.xticks(range(1, max(valid_df['epoch'])+1))
         plt.grid(True)
         plt.legend()
+
 
 def plot_confusion_matrix(metrics, output_path):
     """Plot using data from Metrics instance"""
@@ -149,9 +154,10 @@ def plot_tsne(embeddings, labels, output_path):
     """Generate and save t-SNE plot for embeddings"""
     tsne = TSNE(n_components=2, random_state=42, perplexity=30, n_iter=300)
     embeddings_2d = tsne.fit_transform(embeddings)
-    
+
     plt.figure(figsize=(10, 8))
-    scatter = plt.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c=labels, cmap='viridis', alpha=0.6)
+    scatter = plt.scatter(
+        embeddings_2d[:, 0], embeddings_2d[:, 1], c=labels, cmap='viridis', alpha=0.6)
     plt.colorbar(scatter, label='Class Labels')
     plt.title('t-SNE Visualization of BERT Embeddings')
     plt.xlabel('t-SNE Dimension 1')

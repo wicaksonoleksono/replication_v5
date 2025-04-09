@@ -170,18 +170,17 @@ class HistoryTracker:
         if os.path.exists(history_path):
             with open(history_path, "r") as f:
                 loaded_history = json.load(f)
+                # Preserve existing structure while loading
                 instance.history = {
-                    "train": loaded_history.get("train", {}),
-                    "valid": loaded_history.get("valid", {}),
-                    "best": {
-                        **instance.history["best"],  # Defaults
-                        **loaded_history.get("best", {})  # Loaded values
-                    },
+                    "train": {**instance.history["train"], **loaded_history.get("train", {})},
+                    "valid": {**instance.history["valid"], **loaded_history.get("valid", {})},
+                    "best": {**instance.history["best"], **loaded_history.get("best", {})},
                     "tested": loaded_history.get("tested", False)
                 }
-        # Ensure numeric types after loading
+        # Backward compatibility
         if "tested" not in instance.history:
             instance.history["tested"] = False
+
         if not isinstance(instance.history["best"].get("f1_macro"), (int, float)):
             instance.history["best"]["f1_macro"] = -1
         if not isinstance(instance.history["best"].get("epoch"), int):

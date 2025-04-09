@@ -1,15 +1,16 @@
-import os 
-import numpy 
-import json 
-import tqdm 
-from torch import nn 
-import torch 
-import re 
-no_deprecation_warning=True
-from modules import Metrics
-from modules import plot_confusion_matrix,plot_tsne
+import numpy as np
+from modules import plot_confusion_matrix, plot_tsne
 from tqdm import tqdm
-import numpy as np 
+from modules import Metrics
+import os
+import numpy
+import json
+from torch import nn
+import torch
+import re
+no_deprecation_warning = True
+
+
 def evaluate(
     device,
     is_testing,  # True = testing mode, False = validation mode
@@ -38,8 +39,10 @@ def evaluate(
     with torch.no_grad():
         for batch in progress_bar:
             # Prepare batch data
-            text,attn_mask, labels = batch["post"].to(device), batch["post_attn_mask"].to(device),torch.tensor(batch["label"]).long().to(device)
-            hidden_states, features = model.get_cls_features_ptrnsp(text, attn_mask)
+            text, attn_mask, labels = batch["post"].to(device), batch["post_attn_mask"].to(
+                device), torch.tensor(batch["label"]).long().to(device)
+            hidden_states, features = model.get_cls_features_ptrnsp(
+                text, attn_mask)
             predictions = model(hidden_states)
             loss = ce_fn(predictions, labels)
             total_loss += loss.item()
@@ -93,25 +96,26 @@ def evaluate(
             tracker.save()
             return avg_loss, final_metrics
 
+
 def train(device,
           method,
-          epoch, 
+          epoch,
           train_loader,
-          val_loader, 
-          model, 
-          batch_size, 
+          val_loader,
+          model,
+          batch_size,
           lam,
-          metric_fn, 
-          ce_fn, 
-          optimizer, 
+          metric_fn,
+          ce_fn,
+          optimizer,
           lr_scheduler,
-          tracker, 
+          tracker,
           metrics):
     model.to(device)
     model.train()
     metrics.reset()  # Reset metrics at the start of each epoch
     total_loss = 0
-    progress_bar = tqdm(train_loader,desc=f"Epoch {epoch} Progress", unit="batch")
+    progress_bar = tqdm(train_loader, desc=f"Epoch {epoch} ", unit="batch")
     for idx, batch in enumerate(progress_bar):
         text = batch["post"].to(device)
         attn = batch["post_attn_mask"].to(device)
@@ -124,12 +128,12 @@ def train(device,
         og_hidden, og_feat = model.get_cls_features_ptrnsp(og_text, og_attn)
         _, ag_feat = model.get_cls_features_ptrnsp(ag_text, ag_attn)
         pred = model(og_hidden)
-        ce = ce_fn(pred, og_label) 
-        if method =="semi-hard":
-            metric_loss = metric_fn(og_feat,ag_feat,og_label)
-        if method =="contrastive":
+        ce = ce_fn(pred, og_label)
+        if method == "semi-hard":
+            metric_loss = metric_fn(og_feat, ag_feat, og_label)
+        if method == "contrastive":
             sup_feat = torch.cat([og_feat, ag_feat])
-            metric_loss=metric_fn(sup_feat)
+            metric_loss = metric_fn(sup_feat)
         loss = lam * ce + (1 - lam) * metric_loss
         # Update progress bar with current losses
         progress_bar.set_postfix({
@@ -143,7 +147,8 @@ def train(device,
         optimizer.zero_grad()
         lr_scheduler.step()
         # Update batch-level losses and metrics
-        tracker.update_loss(epoch, idx, loss.item(), ce.item(), metric_loss.item())
+        tracker.update_loss(epoch, idx, loss.item(),
+                            ce.item(), metric_loss.item())
         total_loss += ce.item()
         # Collect predictions and labels for metrics
         batch_preds = torch.argmax(pred, dim=1).detach()
@@ -161,16 +166,15 @@ def train(device,
         recall=computed_train_metrics["recall"],
         is_validation=False
     )
-    avg_loss_valid,computed_valid_metrics=evaluate(device=device,epoch=epoch, data_iter=val_loader, model=model, ce_fn=ce_fn, tracker=tracker, optimizer=optimizer,is_testing=False)
+    avg_loss_valid, computed_valid_metrics = evaluate(
+        device=device, epoch=epoch, data_iter=val_loader, model=model, ce_fn=ce_fn, tracker=tracker, optimizer=optimizer, is_testing=False)
     print(f"Epoch {epoch} completed. \n"
-        f"Training Loss: {avg_train_loss:.4f}, \n"
-        f"Validation Loss: {avg_loss_valid:.4f}, \n"
-        f"Training Accuracy: {computed_train_metrics['accuracy']:.2%}, \n" 
-        f"Validation Accuracy: {computed_valid_metrics['accuracy']:.2%}, \n"
-        f"Training F1 Score: {computed_train_metrics['f1_macro']:.2%}, \n"
-        f"Validation F1 Score: {computed_valid_metrics['f1_macro']:.2%}\n")
-    tracker.save_model(model, optimizer, epoch,lr_scheduler)
+          f"Training Loss: {avg_train_loss:.4f}, \n"
+          f"Validation Loss: {avg_loss_valid:.4f}, \n"
+          f"Training Accuracy: {computed_train_metrics['accuracy']:.2%}, \n"
+          f"Validation Accuracy: {computed_valid_metrics['accuracy']:.2%}, \n"
+          f"Training F1 Score: {computed_train_metrics['f1_macro']:.2%}, \n"
+          f"Validation F1 Score: {computed_valid_metrics['f1_macro']:.2%}\n")
+    tracker.save_model(model, optimizer, epoch, lr_scheduler)
     tracker.save()
     return computed_valid_metrics["f1_macro"]
-
-

@@ -17,6 +17,39 @@ import os
 import re
 
 
+def run_testing(model, data_main, tracker, output_path, device, ihc_test, sbic_test, dyna_test, ce_fn):
+    """Run all evaluation tests and save results"""
+    print("\n🔍 Testing with best model...")
+    model, _, _, _ = tracker.load_model(tracker.history["best"]["path"], model)
+
+    test_cases = []
+    if data_main == "ihc":
+        test_cases = [
+            (ihc_test, "in_data", "ihc_test"),
+            (sbic_test, "sbic_test", "sbic_test"),
+            (dyna_test, "dyna_test", "dyna_test")
+        ]
+    else:
+        test_cases = [
+            (sbic_test, "in_data", "sbic_test"),
+            (ihc_test, "ihc_test", "ihc_test"),
+            (dyna_test, "dyna_test", "dyna_test")
+        ]
+    for data_iter, test_name, folder_name in test_cases:
+        evaluate(
+            is_testing=True,
+            data_iter=data_iter,
+            test_name=test_name,
+            model=model,
+            ce_fn=ce_fn,
+            tracker=tracker,
+            output_path=os.path.join(output_path, folder_name),
+            device=device
+        )
+    tracker.history["tested"] = True
+    tracker.save()
+
+
 def pipeline(
         data_path: str,
         output_base: str,
@@ -93,10 +126,12 @@ def pipeline(
 
     metrics = Metrics()
     tracker = HistoryTracker.load(output_path)
+
     if tracker.history["best"]["f1_macro"] is None:
         tracker.history["best"]["f1_macro"] = -1
     start_epoch = 1
     latest_checkpoint = tracker.get_latest_checkpoint()
+
     if latest_checkpoint:
         match = re.search(r'epoch_?(\d+)', latest_checkpoint)
         if match:
@@ -115,19 +150,13 @@ def pipeline(
     if start_epoch >= num_epochs:
         print(
             f"⚠️ Training already completed (epoch {start_epoch-1}/{num_epochs})")
-        # Add this resume-check block
-        if tracker.history["best"]["path"] and not tracker.history.get("tested"):
-            print("\n🔍 Testing with best model (resumed)...")
-            model, _, _, _ = tracker.load_model(
-                tracker.history["best"]["path"], model)
-            # Your testing code with evaluate() calls goes here
-            tracker.history["tested"] = True
-            tracker.save()
+        if tracker.history["best"]["path"] and not tracker.history.get("tested", False):
+            run_testing(model, data_main, tracker, output_path, device,  # ADD THIS
+                        ihc_test, sbic_test, dyna_test, ce_fn)
             print("💾 Resumed testing completed")
-        elif tracker.history.get("tested"):
+        elif tracker.history.get("tested", False):
             print("✅ Testing already completed")
         return  # Keep this return
-
     for epoch in range(start_epoch, num_epochs+1):
         print(f"\n🚀 Epoch {epoch}/{num_epochs}")
         current_f1 = train(
@@ -153,78 +182,8 @@ def pipeline(
     print(f"💾 Saved checkpoint and metrics for epoch {epoch}")
     visualizer = TrainingVisualizer(tracker.history)
     visualizer.plot_metrics(output_path)
-    print(tracker.history)
-    if tracker.history["best"]["path"]:
-        print("\n🔍 Testing with best model...")
-        model, _, _, _ = tracker.load_model(
-            tracker.history["best"]["path"], model)
-        if data_main == "ihc":
-            evaluate(
-                is_testing=True,
-                data_iter=ihc_test,
-                test_name="in_data",
-                model=model,
-                batch_size=batch_size,
-                ce_fn=ce_fn,
-                tracker=tracker,
-                output_path=os.path.join(output_path, "ihc_test/"),
-                device=device
-            )
-            evaluate(
-                is_testing=True,
-                data_iter=sbic_test,
-                test_name="sbic_test",
-                model=model,
-                batch_size=batch_size,
-                ce_fn=ce_fn,
-                tracker=tracker,
-                output_path=os.path.join(output_path, "sbic_test/"),
-                device=device
-            )
-            evaluate(
-                is_testing=True,
-                data_iter=dyna_test,
-                test_name="dyna_test",
-                model=model,
-                batch_size=batch_size,
-                ce_fn=ce_fn,
-                tracker=tracker,
-                output_path=os.path.join(output_path, "dyna_test/"),
-                device=device
-            )
-        else:
-            evaluate(
-                is_testing=True,
-                data_iter=sbic_test,
-                test_name="in_data",
-                model=model,
-                batch_size=batch_size,
-                ce_fn=ce_fn,
-                tracker=tracker,
-                output_path=os.path.join(output_path, "sbic_test/"),
-                device=device
-            )
-            evaluate(
-                is_testing=True,
-                data_iter=ihc_test,
-                test_name="ihc_test",
-                model=model,
-                batch_size=batch_size,
-                ce_fn=ce_fn,
-                tracker=tracker,
-                output_path=os.path.join(output_path, "ihc_test/"),
-                device=device
-            )
-            evaluate(
-                is_testing=True,
-                data_iter=dyna_test,
-                test_name="dyna_test",
-                model=model,
-                batch_size=batch_size,
-                ce_fn=ce_fn,
-                tracker=tracker,
-                output_path=os.path.join(output_path, "dyna_test/"),
-                device=device
-            )
-    tracker.history["tested"] = True  # This is correct
-    tracker.save()  # This is correct
+    if tracker.history["best"]["path"] and not tracker.history.get("tested", False):
+        run_testing(model, data_main, tracker, output_path, device,
+                    ihc_test, sbic_test, dyna_test, ce_fn)
+    elif tracker.history.get("tested", False):
+        print("✅ Testing already completed")
