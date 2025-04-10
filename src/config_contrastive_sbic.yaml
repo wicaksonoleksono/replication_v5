@@ -10,10 +10,6 @@ lambda_weights:
 batch_size: !!int 8
 num_epochs: !!int 6
 data_mains:
-  - name: "ihc"
-    methods:
-      - name: "contrastive"
-        temperatures: [!!float 0.3]
   - name: "sbic"
     methods:
       - name: "contrastive"
