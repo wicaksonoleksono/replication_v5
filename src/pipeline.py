@@ -84,7 +84,7 @@ def pipeline(
         _, _, dyna_test = get_dataloader_dynahate(
             train_batch_size=batch_size, eval_batch_size=batch_size, base_data_path=data_path)
     else:
-        train_iter, valid_iter, ihc_test = get_dataloader_sbic(
+        train_iter, valid_iter, sbic_test = get_dataloader_sbic(
             train_batch_size=batch_size, eval_batch_size=batch_size, w_aug="imp", seed=seed, base_data_path=data_path)
         _, _, ihc_test = get_dataloader(
             train_batch_size=batch_size, eval_batch_size=batch_size, w_aug="imp", seed=seed, base_data_path=data_path)
