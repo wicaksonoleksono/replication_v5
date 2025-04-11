@@ -2,3 +2,4 @@ preproceessed
 __pycache__
 output.*
 *ipynb
+.ipynb_checkpoints

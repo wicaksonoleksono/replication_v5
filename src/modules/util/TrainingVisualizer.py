@@ -152,7 +152,7 @@ def plot_confusion_matrix(metrics, output_path):
 
 def plot_tsne(embeddings, labels, output_path):
     """Generate and save t-SNE plot for embeddings"""
-    tsne = TSNE(n_components=2, random_state=42, perplexity=30, n_iter=300)
+    tsne = TSNE(n_components=2, random_state=42, perplexity=30, max_iter=300)
     embeddings_2d = tsne.fit_transform(embeddings)
 
     plt.figure(figsize=(10, 8))

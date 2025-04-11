@@ -14,8 +14,8 @@ class SentenceTriplet(nn.Module):
         self.d_fn = d_fn
 
     def _cosine_sim(self, x, y):
-        x_norm = F.normalize(x, p=2, dim=1, eps=1e-6)
-        y_norm = F.normalize(y, p=2, dim=1, eps=1e-6)
+        x_norm = x / (torch.norm(x, p=2, dim=1, keepdim=True) + 1e-8)
+        y_norm = y / (torch.norm(y, p=2, dim=1, keepdim=True) + 1e-8)
         return torch.mm(x_norm, y_norm.T)
 
     def _cosine_distance(self, x, y):
@@ -24,8 +24,13 @@ class SentenceTriplet(nn.Module):
 
     def _angular_distance(self, x, y):
         sim_matrix = self._cosine_sim(x, y)
-        sim_matrix = torch.clamp(sim_matrix, -1.0 + 1e-6, 1.0 - 1e-6)
-        return torch.acos(sim_matrix)
+        with torch.no_grad():
+            max_sim = sim_matrix.max().item()
+            min_sim = sim_matrix.min().item()
+            # Pakai scaling dinamis karena derivasi accos mendekati infinite jika mendekati -1 atau 1 .
+            eps = max(1e-6, 0.001 * (max_sim - min_sim))
+        safe_sim = torch.clamp(sim_matrix, -1.0 + eps, 1.0 - eps)
+        return torch.acos(safe_sim)
 
     def _mean_reducer(self, loss, valid_count):
         return loss.sum() / (valid_count + 1e-7)
