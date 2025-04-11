@@ -97,10 +97,10 @@ def pipeline(
     elif method == "semi-hard":
         if reducer in ["softmax", "adapt_softmax"]:
             output_path = (
-                f"{output_base}.{method}.{data_main}.{encoder_short_name}.{d_fn}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}_red{reducer}_b{beta}_fb{fallback}")
+                f"{output_base}.{method}.{data_main}.{encoder_short_name}.{d_fn}.{reducer}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}_b{beta}_fb{fallback}")
         else:
             output_path = (
-                f"{output_base}.{method}.{data_main}.{encoder_short_name}.{d_fn}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}")
+                f"{output_base}.{method}.{data_main}.{encoder_short_name}.{d_fn}.{reducer}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}")
     os.makedirs(output_path, exist_ok=True)
     model = prim_encoder_con(
         hidden_size=768,

@@ -20,8 +20,6 @@ data_mains:
         reducers:
           - name: "softmax"
             beta_values: [!!int 5, !!int 10, !!int 15]
-          - name: "sum"
-          - name: "mean"
 # Learning rates      : 2e-5
 # reducers            : softmax
 # lambda weights      : 0.25

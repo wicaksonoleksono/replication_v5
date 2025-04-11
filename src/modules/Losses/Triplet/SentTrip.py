@@ -40,24 +40,11 @@ class SentenceTriplet(nn.Module):
 
     def _softmax_pooling_reducer(self, loss_terms):
         if loss_terms.numel() == 0:
-            return torch.tensor(0.0, device=loss_terms.device)
-        max_val = torch.max(loss_terms.detach())
-        stable_exp = torch.exp(self.beta * (loss_terms - max_val))
-        pooled_loss = (1.0/self.beta) * (max_val +
-                                         torch.log(torch.mean(stable_exp) + 1e-8))
-
-        return pooled_loss
-
-    def _adaptive_softmax_pooling_reducer(self, loss_terms):
-        if loss_terms.numel() == 0:
             return torch.tensor(0.0, device=loss_terms.device, dtype=loss_terms.dtype)
-        batch_mean = torch.mean(loss_terms)
-        batch_std = torch.std(loss_terms)
-        max_loss = torch.max(loss_terms)
-        adaptive_beta = self.beta * \
-            (1 + (max_loss - batch_mean) / (batch_std + 1e-6))
-        pooled_loss = (1.0 / adaptive_beta) * \
-            torch.log(torch.mean(torch.exp(adaptive_beta * loss_terms)))
+        N = loss_terms.numel()
+        # Menggunakan log-sum-exp: (1/β) * log( mean(exp(β * l_i)) ) # bckground nyta apa ya
+        pooled_loss = (1.0 / self.beta) * \
+            torch.log(torch.mean(torch.exp(self.beta * loss_terms)))
         return pooled_loss
 
     def _apply_reducer(self, loss_terms, valid_count):
@@ -67,8 +54,7 @@ class SentenceTriplet(nn.Module):
             return self._sum_reducer(loss_terms)
         elif self.reducers == "softmax":
             return self._softmax_pooling_reducer(loss_terms)
-        elif self.reducers == "adapt_softmax":
-            return self._adaptive_softmax_pooling_reducer(loss_terms)
+
         else:
             raise ValueError(f"Unknown reducer: {self.reducers}")
 
