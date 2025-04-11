@@ -93,16 +93,15 @@ def pipeline(
     encoder_short_name = "bert" if "bert-base-uncased" in encoder_name else "hatebert"
     if method == "contrastive":
         output_path = (
-            f"{output_base}.{method}.{data_main}/{encoder_short_name}_lr{learning_rate}_lam{lambda_weight}_temp{temperature}")
+            f"{output_base}.{method}.{data_main}.{encoder_short_name}/_lr{learning_rate}_lam{lambda_weight}_temp{temperature}")
     elif method == "semi-hard":
         if reducer in ["softmax", "adapt_softmax"]:
             output_path = (
-                f"{output_base}.{method}.{data_main}/{encoder_short_name}_lr{learning_rate}_lam{lambda_weight}_margin{margin}_d_fn{d_fn}_red{reducer}_b{beta}_fb{fallback}")
+                f"{output_base}.{method}.{data_main}.{encoder_short_name}.{d_fn}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}_red{reducer}_b{beta}_fb{fallback}")
         else:
             output_path = (
-                f"{output_base}.{method}.{data_main}/{encoder_short_name}_lr{learning_rate}_lam{lambda_weight}_margin{margin}_d_fn{d_fn}")
+                f"{output_base}.{method}.{data_main}.{encoder_short_name}.{d_fn}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}")
     os.makedirs(output_path, exist_ok=True)
-    # Building model initializing losses and such .
     model = prim_encoder_con(
         hidden_size=768,
         label_size=2,

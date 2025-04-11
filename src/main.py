@@ -124,7 +124,8 @@ def main(args=None):
                     all_combinations.append(combo)
 
     for combo in all_combinations:
-        method_dir = f"{combo['output_base']}.{combo['method']}.{combo['data_main']}"
+        encoder_short_name = "bert" if "bert-base-uncased" in combo["encoder"] else "hatebert"
+        method_dir = f"{combo['output_base']}.{combo['method']}.{combo['data_main']}.{encoder_short_name}.{combo['distance_fn']}"
         os.makedirs(method_dir, exist_ok=True)
         progress_path = os.path.join(method_dir, "progress.json")
         assert combo["encoder"] in ["bert-base-uncased", "GroNLP/hateBERT"], \
@@ -162,7 +163,7 @@ def main(args=None):
             raise ValueError(f"Unsupported method: {combo['method']}")
 
     progress_path = os.path.join(
-        f"{output_base}.{method_name}.{data_main_name}", "progress.json")
+        f"{output_base}.{method_name}.{data_main_name}.{encoder_short_name}.{d_fn}", "progress.json")
     total_combos = len(all_combinations)
     print(f"Found {total_combos} total combinations to run.")
     progress_data = load_progress(progress_path)
