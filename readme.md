@@ -35,13 +35,12 @@ new combo copy paste
 ```
 8x instances. Hopes it's good.
 
-config_semi_hard_ihc_bert_ang.yaml
-config_semi_hard_ihc_bert_cos.yaml
-config_semi_hard_ihc_hbert_ang. yaml
-config_semi_hard_ihc_hbert_cos. yaml
----------------------------------
-config_semi_hard_sbic_bert_ang.yaml
-config_semi_hard_sbic_bert_cos.yaml
-config_semi_hard_sbic_hbert_ang. yaml
-config_semi_hard_sbic_hbert_cos. yaml
+python main.py --config "./configs/config_semi_hard_ihc_bert_ang.yaml"
+python main.py --config "./configs/config_semi_hard_ihc_bert_cos.yaml"
+python main.py --config "./configs/config_semi_hard_ihc_hbert_ang. yaml"
+python main.py --config "./configs/config_semi_hard_ihc_hbert_cos. yaml"
+python main.py --config "./configs/config_semi_hard_sbic_bert_ang.yaml"
+python main.py --config "./configs/config_semi_hard_sbic_bert_cos.yaml"
+python main.py --config "./configs/config_semi_hard_sbic_hbert_ang. yaml"
+python main.py --config "./configs/config_semi_hard_sbic_hbert_cos. yaml
 ```
