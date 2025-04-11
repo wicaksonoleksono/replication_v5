@@ -40,11 +40,12 @@ class SentenceTriplet(nn.Module):
 
     def _softmax_pooling_reducer(self, loss_terms):
         if loss_terms.numel() == 0:
-            return torch.tensor(0.0, device=loss_terms.device, dtype=loss_terms.dtype)
-        N = loss_terms.numel()
-        # Menggunakan log-sum-exp: (1/β) * log( mean(exp(β * l_i)) ) # bckground nyta apa ya
-        pooled_loss = (1.0 / self.beta) * \
-            torch.log(torch.mean(torch.exp(self.beta * loss_terms)))
+            return torch.tensor(0.0, device=loss_terms.device)
+        max_val = torch.max(loss_terms.detach())
+        stable_exp = torch.exp(self.beta * (loss_terms - max_val))
+        pooled_loss = (1.0/self.beta) * (max_val +
+                                         torch.log(torch.mean(stable_exp) + 1e-8))
+
         return pooled_loss
 
     def _adaptive_softmax_pooling_reducer(self, loss_terms):
