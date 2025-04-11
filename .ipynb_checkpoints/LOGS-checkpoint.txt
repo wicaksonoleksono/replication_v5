@@ -1,0 +1,109 @@
+1. ```
+/usr/local/lib/python3.12/dist-packages/sklearn/metrics/_classification.py:1531: UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, f"{metric.capitalize()} is", len(result))
+/usr/local/lib/python3.12/dist-packages/sklearn/manifold/_t_sne.py:1162: FutureWarning: 'n_iter' was renamed to 'max_iter' in version 1.5 and will be removed in 1.7.
+  warnings.warn(
+Traceback (most recent call last):
+  File "/workspace/replication_v5/src/main.py", line 224, in <module>
+    main()
+  File "/workspace/replication_v5/src/main.py", line 188, in main
+    pipeline(
+  File "/workspace/replication_v5/src/pipeline.py", line 186, in pipeline
+    run_testing(model, data_main, tracker, output_path, device,
+  File "/workspace/replication_v5/src/pipeline.py", line 39, in run_testing
+    evaluate(
+  File "/workspace/replication_v5/src/train_eval.py", line 66, in evaluate
+    plot_tsne(all_embeddings, all_labels, output_path)
+  File "/workspace/replication_v5/src/modules/util/TrainingVisualizer.py", line 156, in plot_tsne
+    embeddings_2d = tsne.fit_transform(embeddings)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/utils/_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/base.py", line 1473, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/manifold/_t_sne.py", line 1176, in fit_transform
+    embedding = self._fit(X)
+                ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/manifold/_t_sne.py", line 884, in _fit
+    X = self._validate_data(
+        ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/base.py", line 633, in _validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/utils/validation.py", line 1064, in check_array
+    _assert_all_finite(
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/utils/validation.py", line 123, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/utils/validation.py", line 172, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+TSNE does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+root@5d5b70b52ea8:/workspace/replication_v5/src# python main.py --config "./config_semi_hard_ihc.yaml"
+[('softmax', 15), ('softmax', 5), ('softmax', 10), ('sum', None), ('mean', None)]
+Found 60 total combinations to run.
+Resuming from combination index 1 of 60.
+```
+2. 
+```
+ 467/467 [00:03<00:00, 123.59batch/s, CE Loss=nan]
+/usr/local/lib/python3.12/dist-packages/sklearn/metrics/_classification.py:1531: UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, f"{metric.capitalize()} is", len(result))
+/usr/local/lib/python3.12/dist-packages/sklearn/manifold/_t_sne.py:1162: FutureWarning: 'n_iter' was renamed to 'max_iter' in version 1.5 and will be removed in 1.7.
+  warnings.warn(
+Traceback (most recent call last):
+  File "/workspace/replication_v5/src/main.py", line 224, in <module>
+    main()
+  File "/workspace/replication_v5/src/main.py", line 188, in main
+    pipeline(
+  File "/workspace/replication_v5/src/pipeline.py", line 186, in pipeline
+    run_testing(model, data_main, tracker, output_path, device,
+  File "/workspace/replication_v5/src/pipeline.py", line 39, in run_testing
+    evaluate(
+  File "/workspace/replication_v5/src/train_eval.py", line 66, in evaluate
+    plot_tsne(all_embeddings, all_labels, output_path)
+  File "/workspace/replication_v5/src/modules/util/TrainingVisualizer.py", line 156, in plot_tsne
+    embeddings_2d = tsne.fit_transform(embeddings)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/utils/_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/base.py", line 1473, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/manifold/_t_sne.py", line 1176, in fit_transform
+    embedding = self._fit(X)
+                ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/manifold/_t_sne.py", line 884, in _fit
+    X = self._validate_data(
+        ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/base.py", line 633, in _validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/utils/validation.py", line 1064, in check_array
+    _assert_all_finite(
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/utils/validation.py", line 123, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/utils/validation.py", line 172, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+TSNE does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+root@5d5b70b52ea8:/workspace/replication_v5/src# python main.py --config "./config_semi_hard_ihc.yaml"
+[('softmax', 15), ('softmax', 5), ('softmax', 10), ('sum', None), ('mean', None)]
+Found 60 total combinations to run.
+Resuming from combination index 1 of 60.
+
+=== Combo 2/60 ===
+num epoch=6 | seed=0 | batch_size=8|data_main=ihc | method=semi-hard | encoder=bert-base-uncased | learning_rate=2e-05 | lambda_weight=0.25
+temperature=None | margin=0.3 | fallback=True | reducer=softmax | beta=5 | dist_fn=angular
+
+seed is 0
+/workspace/replication_v5/src/modules/util/History.py:53: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  checkpoint = torch.load(
+loaded epoch output.semi-hard.ihc/bert_lr2e-05_lam0.25_margin0.3_d_fnangular_redsoftmax_b5_fbTrue/epoch_6.pth
+Optimizer found
+learning rate scheduler found
+✅ Resuming from epoch 6 (training from 7)
+⚠️ Training already completed (epoch 6/6)
+```
