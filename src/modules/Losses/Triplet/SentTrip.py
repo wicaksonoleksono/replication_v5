@@ -33,13 +33,15 @@ class SentenceTriplet(nn.Module):
         return torch.acos(safe_sim)
 
     def _chord_distance(self, x, y):
-        # r =1 karena sudah ternormalisasi
+        # r =1 karena sudah ternormalisasi # same as euclidian distance . very equal. pretty much .
         theta = self._angular_distance(x, y)
         return 2*torch.sin(theta/2)
 
-    def _correlation_distance(self, x, y):
-        sim_matrix = self._cosine_sim(x, y)
-        return torch.sqrt((1 - sim_matrix)/2)
+    def _area_loss(self, x, y):
+        theta = self._angular_distance(x, y)
+        return 0.5 * (theta - torch.sin(theta))
+
+    # reducers
 
     def _mean_reducer(self, loss, valid_count):
         return loss.sum() / (valid_count + 1e-7)
@@ -81,10 +83,10 @@ class SentenceTriplet(nn.Module):
         elif self.d_fn == "chord":
             d_ap = self._chord_distance(og_feat, ag_feat).diag()  # diagonal
             d_an = self._chord_distance(og_feat, og_feat)
-        elif self.d_fn == "correlation":
-            d_ap = self._correlation_distance(
-                og_feat, ag_feat).diag()  # diagonal
-            d_an = self._correlation_distance(og_feat, og_feat)
+
+        elif self.d_fn == "area":
+            d_ap = self._area_loss(og_feat, ag_feat).diag()  # diagonal
+            d_an = self._area_loss(og_feat, og_feat)
 
         labels = labels.view(-1)
         # valid_neg_mask checks for different labels & not self-pair
@@ -127,3 +129,10 @@ class SentenceTriplet(nn.Module):
         loss_terms = F.relu(d_ap[valid_semi] -
                             min_d_an_semi[valid_semi] + self.margin)
         return self._apply_reducer(loss_terms, valid_semi.sum().float())
+    # def _correlation_distance(self, x, y):
+    #     sim_matrix = self._cosine_sim(x, y)
+    #     return torch.sqrt((1 - sim_matrix)/2)
+  # elif self.d_fn == "correlation":
+        #     d_ap = self._correlation_distance(
+        #         og_feat, ag_feat).diag()  # diagonal
+        #     d_an = self._correlation_distance(og_feat, og_feat)
