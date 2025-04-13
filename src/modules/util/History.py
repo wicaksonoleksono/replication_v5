@@ -180,7 +180,7 @@ class HistoryTracker:
                     }                    #
                     , "tested": loaded_history.get("tested", False)
                 }
-        # Backward compatibility
+                print(f"Loaded history keys: {loaded_history.keys()}")
         if "tested" not in instance.history:
             instance.history["tested"] = False
 
