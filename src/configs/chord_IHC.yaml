@@ -10,24 +10,34 @@ lambda_weights:
 batch_size: !!int 8
 num_epochs: !!int 6
 data_mains:
-  - name: "sbic"
+  - name: "ihc"
     methods:
       - name: "semi-hard"
-        d_fn: ["angular"]
+        d_fn: ["chord"]
+        margins: [!!float 0.3]
         fallback: [!!bool true]
-        margins: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:
           - name: "softmax"
-            beta_values: [!!int 5, !!int 10, !!int 15]
+            beta_values: [!!int 15]
+            # ,
+    # - name: "sbic"
+  #   methods:
+  #     - name: "semi-hard"
+  #       fallback: [!!bool true]
+  #       margins: [!!float 0.45]
+  #       reducers:
+  #         - name: "softmax"
+  #           beta_values: [!!int 5]
 # Learning rates      : 2e-5
 # reducers            : softmax
 # lambda weights      : 0.25
 
 # Fallback            : True
-
+# BERT
 # IHC   #
 # beta                : 15
 # Margin              : 0.3
+# HBERT
 
 # SBIC  #
 # beta                : 5
