@@ -164,6 +164,24 @@ class HistoryTracker:
         latest_epoch = max(epochs)
         return os.path.join(self.output_path, f"epoch_{latest_epoch}.pth")
 
+    def purge_epoch_checkpoints(self):
+        """Delete all epoch_*.pth files except the best model checkpoint"""
+        checkpoints = [
+            f for f in os.listdir(self.output_path)
+            if f.startswith("epoch_") and f.endswith(".pth")
+        ]
+        protected = set()
+        if self.history["best"]["path"]:
+            best_file = os.path.basename(self.history["best"]["path"])
+            protected.add(best_file)
+        for checkpoint in checkpoints:
+            if checkpoint not in protected:
+                try:
+                    os.remove(os.path.join(self.output_path, checkpoint))
+                    print(f"🧹 Cleaned up: {checkpoint}")
+                except Exception as e:
+                    print(f"⚠️ Failed to delete {checkpoint}: {e}")
+
     @classmethod
     def load(cls, output_path):
         instance = cls(output_path)

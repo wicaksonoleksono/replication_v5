@@ -48,6 +48,7 @@ def run_testing(model, data_main, tracker, output_path, device, ihc_test, sbic_t
         )
     tracker.history["tested"] = True
     tracker.save()
+    tracker.purge_epoch_checkpoints()
 
 
 def pipeline(
