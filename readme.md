@@ -52,6 +52,11 @@ python main.py --config "./configs/IHC/others/config_semi_hard_ihc_hbert_sum.yam
 python main.py --config "./configs/IHC/others/config_semi_hard_ihc_hbert_mean.yaml"
 python main.py --config "./configs/IHC/others/config_semi_hard_ihc_bert_sum.yaml"
 
+<!-- Tambahan -->
+python main.py --config "./configs/chord_SBIC.yaml"
+python main.py --config "./configs/chord_SBIC_2.yaml"
+python main.py --config "./configs/chord_IHC_2.yaml"
+python main.py --config "./configs/chord_IHC.yaml"
 Other configs.
 
 ```
