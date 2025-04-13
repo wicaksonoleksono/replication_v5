@@ -129,6 +129,7 @@ class SentenceTriplet(nn.Module):
         loss_terms = F.relu(d_ap[valid_semi] -
                             min_d_an_semi[valid_semi] + self.margin)
         return self._apply_reducer(loss_terms, valid_semi.sum().float())
+
     # def _correlation_distance(self, x, y):
     #     sim_matrix = self._cosine_sim(x, y)
     #     return torch.sqrt((1 - sim_matrix)/2)
@@ -136,3 +137,16 @@ class SentenceTriplet(nn.Module):
         #     d_ap = self._correlation_distance(
         #         og_feat, ag_feat).diag()  # diagonal
         #     d_an = self._correlation_distance(og_feat, og_feat)
+    # def _area_loss(self, x, y):
+    #     dot = torch.mm(x, y.T)  # (batch, batch)
+    #     with torch.no_grad():
+    #         max_sim = dot.max().item()
+    #         min_sim = dot.min().item()
+    #         eps = max(1e-6, 0.001 * (max_sim - min_sim))
+    #     x_norms = torch.norm(x, p=2, dim=1, keepdim=True)  # (batch, 1)
+    #     y_norms = torch.norm(y, p=2, dim=1)  # (batch,)
+    #     cos_theta = dot / (x_norms * y_norms + 1e-8)  # (batch, batch)
+    #     cos_theta = torch.clamp(cos_theta, -1.0 + eps, 1.0 - eps)
+    #     theta = torch.acos(cos_theta)  # (batch, batch)
+    #     radius = (x_norms + y_norms.unsqueeze(0)) / 2.0  # (batch, batch)
+    #     return 0.5 * (radius ** 2) * (theta - torch.sin(theta))
