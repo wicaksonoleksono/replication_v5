@@ -32,6 +32,10 @@ class SentenceTriplet(nn.Module):
         safe_sim = torch.clamp(sim_matrix, -1.0 + eps, 1.0 - eps)
         return torch.acos(safe_sim)
 
+    def _correlation_distance(self, x, y):
+        sim_matrix = self._cosine_sim(x, y)
+        return torch.sqrt((1 - sim_matrix)/2)
+
     def _mean_reducer(self, loss, valid_count):
         return loss.sum() / (valid_count + 1e-7)
 
@@ -69,6 +73,10 @@ class SentenceTriplet(nn.Module):
         elif self.d_fn == "angular":
             d_ap = self._angular_distance(og_feat, ag_feat).diag()  # diagonal
             d_an = self._angular_distance(og_feat, og_feat)
+        elif self.d_fn == "correlation":
+            d_ap = self._correlation_distance(
+                og_feat, ag_feat).diag()  # diagonal
+            d_an = self._correlation_distance(og_feat, og_feat)
 
         labels = labels.view(-1)
         # valid_neg_mask checks for different labels & not self-pair
