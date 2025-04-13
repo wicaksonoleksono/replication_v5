@@ -46,6 +46,7 @@ class HistoryTracker:
         }
         path = os.path.join(self.output_path, f"epoch_{epoch}.pth")
         torch.save(checkpoint, path)
+        self.save()
         return path
 
     def load_model(self, path, model, optimizer=None, lr_scheduler=None):
@@ -170,12 +171,14 @@ class HistoryTracker:
         if os.path.exists(history_path):
             with open(history_path, "r") as f:
                 loaded_history = json.load(f)
-                # Preserve existing structure while loading
                 instance.history = {
-                    "train": {**instance.history["train"], **loaded_history.get("train", {})},
-                    "valid": {**instance.history["valid"], **loaded_history.get("valid", {})},
-                    "best": {**instance.history["best"], **loaded_history.get("best", {})},
-                    "tested": loaded_history.get("tested", False)
+                    "train": loaded_history.get("train", {}),
+                    "valid": loaded_history.get("valid", {}),
+                    "best": {
+                        **instance.history["best"],
+                        **loaded_history.get("best", {})
+                    }                    #
+                    , "tested": loaded_history.get("tested", False)
                 }
         # Backward compatibility
         if "tested" not in instance.history:
