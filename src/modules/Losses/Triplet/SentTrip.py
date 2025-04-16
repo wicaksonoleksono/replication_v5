@@ -42,6 +42,11 @@ class SentenceTriplet(nn.Module):
         return 0.5 * (theta - torch.sin(theta))
 
     # reducers
+    def _scaled_chord(self, x, y):
+        dot = torch.mm(x, y)
+        # adding non linear profile
+        scaled = torch.exp(dot/self.margin)
+        return torch.sqrt(2-2(scaled))
 
     def _mean_reducer(self, loss, valid_count):
         return loss.sum() / (valid_count + 1e-7)
@@ -83,10 +88,9 @@ class SentenceTriplet(nn.Module):
         elif self.d_fn == "chord":
             d_ap = self._chord_distance(og_feat, ag_feat).diag()  # diagonal
             d_an = self._chord_distance(og_feat, og_feat)
-
-        elif self.d_fn == "area":
-            d_ap = self._area_loss(og_feat, ag_feat).diag()  # diagonal
-            d_an = self._area_loss(og_feat, og_feat)
+        elif self.d_fn == "scaled_chord":
+            d_ap = self._chord_distance(og_feat, ag_feat).diag()  # diagonal
+            d_an = self._chord_distance(og_feat, og_feat)
 
         labels = labels.view(-1)
         # valid_neg_mask checks for different labels & not self-pair

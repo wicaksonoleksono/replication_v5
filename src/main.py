@@ -148,8 +148,8 @@ def main(args=None):
                 f"Expected fallback to be a boolean, got {combo['fallback']}"
             assert combo["reducer"] in ["mean", "sum", "softmax", "adapt_softmax"], \
                 f"Expected reducer to be one of ['mean', 'sum', 'softmax', 'adapt_softmax'], got {combo['reducer']}"
-            assert combo["distance_fn"] in ["angular", "cos", "chord", "area"], \
-                f"Expected distance_fn to be either 'angular' or 'cos','chord','area' got {combo['distance_fn']}"
+            assert combo["distance_fn"] in ["angular", "cos", "chord", "scaled_chord"], \
+                f"Expected distance_fn to be either 'angular' or 'cos','chord','scaled_chord' got {combo['distance_fn']}"
             if combo["reducer"] in ["softmax", "adapt_softmax"]:
                 assert 5 <= combo["beta"] <= 15, \
                     f"Expected beta to be in the range [5, 15], got {combo['beta']}"
