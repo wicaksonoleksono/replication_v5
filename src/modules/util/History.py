@@ -52,7 +52,7 @@ class HistoryTracker:
     def load_model(self, path, model, optimizer=None, lr_scheduler=None):
         """Load model and optionally optimizer state"""
         checkpoint = torch.load(
-            path, map_location="cuda" if torch.cuda.is_available() else "cpu")
+            path, map_location="cuda" if torch.cuda.is_available() else "cpu", weights_only=False)
         model.load_state_dict(checkpoint["model_state"])
         print(f"loaded epoch {path}")
         if optimizer and "optimizer_state" in checkpoint:
