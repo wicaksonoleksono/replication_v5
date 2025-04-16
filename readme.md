@@ -64,20 +64,24 @@ Other configs.
 NEWEST SHT
 
 ```
-python main.py --config "./configs/chord_SBIC.yaml"
-python main.py --config "./configs/chord_SBIC_2.yaml"
-python main.py --config "./configs/chord_IHC_2.yaml"
-python main.py --config "./configs/chord_IHC.yaml"
-python main.py --config "./configs/SBIC/config_semi_hard_sbic_bert_cos.yaml"
-python main.py --config "./configs/SBIC/config_semi_hard_sbic_hbert_ang.yaml"
-python main.py --config "./configs/SBIC/config_semi_hard_sbic_hbert_cos.yaml"
-python main.py --config "./configs/SBIC/config_semi_hard_sbic_bert_ang.yaml"
-python main.py --config "./configs/SBIC/others/config_semi_hard_sbic_bert_mean.yaml"
-python main.py --config "./configs/SBIC/others/config_semi_hard_sbic_hbert_mean.yaml"
-python main.py --config "./configs/IHC/config_semi_hard_ihc_hbert_cos.yaml"
-python main.py --config "./configs/IHC/config_semi_hard_ihc_bert_ang.yaml"
-python main.py --config "./configs/IHC/config_semi_hard_ihc_hbert_ang.yaml"
-python main.py --config "./configs/IHC/config_semi_hard_ihc_bert_cos.yaml"
-python main.py --config "./configs/IHC/others/config_semi_hard_ihc_bert_mean.yaml"
-python main.py --config "./configs/IHC/others/config_semi_hard_ihc_hbert_mean.yaml"
+python main.py --config "./configs/chord_SBIC.yaml"vv
+python main.py --config "./configs/chord_SBIC_2.yaml"vv
+python main.py --config "./configs/chord_IHC_2.yaml"vv
+python main.py --config "./configs/chord_IHC.yaml"vv
+python main.py --config "./configs/SBIC/config_semi_hard_sbic_bert_cos.yaml"vv
+python main.py --config "./configs/SBIC/config_semi_hard_sbic_hbert_ang.yaml"vv
+python main.py --config "./configs/SBIC/config_semi_hard_sbic_hbert_cos.yaml"vv
+python main.py --config "./configs/SBIC/config_semi_hard_sbic_bert_ang.yaml"vv
+python main.py --config "./configs/SBIC/others/config_semi_hard_sbic_bert_mean.yaml"vv
+python main.py --config "./configs/SBIC/others/config_semi_hard_sbic_hbert_mean.yaml"vv
+python main.py --config "./configs/IHC/config_semi_hard_ihc_hbert_cos.yaml"vv
+python main.py --config "./configs/IHC/config_semi_hard_ihc_bert_ang.yaml"vv
+python main.py --config "./configs/IHC/config_semi_hard_ihc_hbert_ang.yaml"vv
+python main.py --config "./configs/IHC/config_semi_hard_ihc_bert_cos.yaml"vv
+python main.py --config "./configs/IHC/others/config_semi_hard_ihc_bert_mean.yaml"vv
+python main.py --config "./configs/IHC/others/config_semi_hard_ihc_hbert_mean.yaml" vv
+python main.py --config "./configs/scaled_chord/chord_SBIC.yaml"
+python main.py --config "./configs/scaled_chord/chord_SBIC_2.yaml"
+python main.py --config "./configs/scaled_chord/chord_IHC_2.yaml"
+python main.py --config "./configs/scaled_chord/chord_IHC.yaml"
 ```
