@@ -1,6 +1,7 @@
 data_path: "dataset/preproceessed"
 output_base: "output"
 seed: !!int 0
+
 encoders:
   - "GroNLP/hateBERT"
 learning_rates:
@@ -14,30 +15,19 @@ data_mains:
     methods:
       - name: "semi-hard"
         d_fn: ["scaled_chord"]
-        margins: [!!float 0.3]
         fallback: [!!bool true]
+        margins: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:
           - name: "softmax"
-            beta_values: [!!int 15]
-            # ,
-    # - name: "sbic"
-  #   methods:
-  #     - name: "semi-hard"
-  #       fallback: [!!bool true]
-  #       margins: [!!float 0.45]
-  #       reducers:
-  #         - name: "softmax"
-  #           beta_values: [!!int 5]
-# Learning rates      : 2e-5
+            beta_values: [!!int 15, !!int 5, !!int 10]
 # reducers            : softmax
 # lambda weights      : 0.25
 
 # Fallback            : True
-# BERT
+
 # IHC   #
 # beta                : 15
 # Margin              : 0.3
-# HBERT
 
 # SBIC  #
 # beta                : 5
