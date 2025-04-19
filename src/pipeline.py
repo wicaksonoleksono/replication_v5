@@ -18,7 +18,6 @@ import re
 
 
 def run_testing(model, data_main, tracker, output_path, device, ihc_test, sbic_test, dyna_test, ce_fn):
-    """Run all evaluation tests and save results"""
     print("\n🔍 Testing with best model...")
     model, _, _, _ = tracker.load_model(tracker.history["best"]["path"], model)
 
@@ -53,7 +52,7 @@ def run_testing(model, data_main, tracker, output_path, device, ihc_test, sbic_t
 
 def pipeline(
         data_path: str,
-        output_base: str,
+        method_dir: str,
 
         data_main: str,
         seed: int,
@@ -94,14 +93,14 @@ def pipeline(
     encoder_short_name = "bert" if "bert-base-uncased" in encoder_name else "hatebert"
     if method == "contrastive":
         output_path = (
-            f"{output_base}.{method}.{data_main}.{encoder_short_name}/_lr{learning_rate}_lam{lambda_weight}_temp{temperature}")
+            f"{method_dir}/_lr{learning_rate}_lam{lambda_weight}_temp{temperature}")
     elif method == "semi-hard":
         if reducer in ["softmax", "adapt_softmax"]:
             output_path = (
-                f"{output_base}.{method}.{data_main}.{encoder_short_name}.{d_fn}.{reducer}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}_b{beta}_fb{fallback}")
+                f"{method_dir}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}_b{beta}_fb{fallback}")
         else:
             output_path = (
-                f"{output_base}.{method}.{data_main}.{encoder_short_name}.{d_fn}.{reducer}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}")
+                f"{method_dir}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}")
     os.makedirs(output_path, exist_ok=True)
     model = prim_encoder_con(
         hidden_size=768,
@@ -146,7 +145,6 @@ def pipeline(
     else:
         print("⭐ No checkpoints found - starting from scratch")
         start_epoch = 1
-
     if start_epoch >= num_epochs:
         print(
             f"⚠️ Training already completed (epoch {start_epoch-1}/{num_epochs})")

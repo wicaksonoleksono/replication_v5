@@ -42,7 +42,6 @@ class HistoryTracker:
             "optimizer_state": optimizer.state_dict(),
             # Changed key name for consistency
             "lr_scheduler_state": lr_scheduler.state_dict(),
-            "history": self.history
         }
         path = os.path.join(self.output_path, f"epoch_{epoch}.pth")
         torch.save(checkpoint, path)
@@ -61,8 +60,9 @@ class HistoryTracker:
         if lr_scheduler and "lr_scheduler_state" in checkpoint:
             lr_scheduler.load_state_dict(checkpoint["lr_scheduler_state"])
             print("learning rate scheduler found")
-        if "history" in checkpoint:
-            self.history = checkpoint["history"]
+        history_file = os.path.join(self.output_path, "training_history.json")
+        with open(history_file, "r") as f:
+            self.history = json.load(f)
 
         return model, optimizer, checkpoint.get("epoch", 0), lr_scheduler
 
@@ -123,7 +123,6 @@ class HistoryTracker:
                 "epoch": epoch,
                 "model_state": model.state_dict(),
                 "optimizer_state": optimizer.state_dict(),
-                "history": self.history
             }, best_path)
 
             # Update history

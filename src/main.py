@@ -54,7 +54,7 @@ def main(args=None):
                         "lambda_weight": lam,
                         "batch_size": batch_size,
                         "num_epochs": num_epochs,
-                        "output_base": output_base,
+                        "method_dir": None,
                         # method-specific
                         "temperature": temp,
                         "margin": None,
@@ -111,7 +111,8 @@ def main(args=None):
                         "lambda_weight": lam,
                         "batch_size": batch_size,
                         "num_epochs": num_epochs,
-                        "output_base": output_base,
+                        "method_dir": None,
+
                         # method-specific
                         "temperature": None,
 
@@ -137,8 +138,7 @@ def main(args=None):
             f"Expected batch_size to be one of [8, 16, 32], got {combo['batch_size']}"
         assert 0 <= combo["num_epochs"] <= 6, \
             f"Expected num_epochs to be in the range [0, 6], got {combo['num_epochs']}"
-        assert isinstance(combo["output_base"], str), \
-            f"Expected output_base to be a string, got {type(combo['output_base'])}"
+
         # Check method-specific parameters
         if combo["method"] == "semi-hard":
             assert combo["margin"] in [0.3, 0.4, 0.45], \
@@ -162,15 +162,14 @@ def main(args=None):
             raise ValueError(f"Unsupported method: {combo['method']}")
 
     if combo['method'] == "semi_hard":
-        method_dir = f"{combo['output_base']}.{combo['method']}.{combo['data_main']}.{encoder_short_name}.{combo['distance_fn']}.{combo['reducer']}"
-        os.makedirs(method_dir, exist_ok=True)
+        combo['method_dir'] = f"{output_base}.{combo['method']}.{combo['data_main']}.{encoder_short_name}.{combo['distance_fn']}.{combo['reducer']}"
+        os.makedirs(combo['method_dir'], exist_ok=True)
     elif combo['method'] == "contrastive":
         # nnti diganti
-        method_dir = f"{combo['output_base']}.{combo['method']}.{combo['data_main']}.{encoder_short_name}"
-        os.makedirs(method_dir, exist_ok=True)
-
-        # wait
-    progress_path = os.path.join(method_dir, "progress.json")
+        combo['method_dir'] = f"{output_base}.{combo['method']}.{combo['data_main']}.{encoder_short_name}"
+        os.makedirs(combo['method_dir'], exist_ok=True)
+    print(f"method dir :{combo['method_dir']}")
+    progress_path = os.path.join(combo['method_dir'], "progress.json")
     total_combos = len(all_combinations)
     print(f"Found {total_combos} total combinations to run.")
     progress_data = load_progress(progress_path)
@@ -195,10 +194,9 @@ def main(args=None):
         )
         pipeline(
             data_path=data_path,
-            output_base=combo["output_base"],
+            method_dir=combo['method_dir'],
             data_main=combo["data_main"],
             seed=seed,
-
             encoder_name=combo["encoder"],
             learning_rate=combo["learning_rate"],
             batch_size=combo["batch_size"],
