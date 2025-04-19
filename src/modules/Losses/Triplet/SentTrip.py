@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-import math
 
 
 class SentenceTriplet(nn.Module):
@@ -40,8 +39,8 @@ class SentenceTriplet(nn.Module):
     def _area_loss(self, x, y):
         theta = self._angular_distance(x, y)
         return 0.5 * (theta - torch.sin(theta))
-
     # reducers
+
     def _scaled_chord(self, x, y):
         dot = torch.mm(x, y)
         # adding non linear profile

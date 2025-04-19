@@ -22,7 +22,7 @@ class Metrics:
         """Calculate metrics from stored predictions"""
         return {
             "accuracy": accuracy_score(self.true_labels, self.pred_labels),
-            "precision": precision_score(self.true_labels, self.pred_labels, average='macro', zero_division=0),
+            "precision": precision_score(self.true_labels, self.pred_labels, average='macro'),
             "recall": recall_score(self.true_labels, self.pred_labels, average='macro'),
             "f1_macro": f1_score(self.true_labels, self.pred_labels, average='macro'),
             "f1_weighted": f1_score(self.true_labels, self.pred_labels, average='weighted')
