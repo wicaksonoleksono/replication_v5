@@ -161,7 +161,7 @@ def main(args=None):
         else:
             raise ValueError(f"Unsupported method: {combo['method']}")
 
-    if combo['method'] == "semi_hard":
+    if combo['method'] == "semi_hard" or "SST":
         combo['method_dir'] = f"{output_base}.{combo['method']}.{combo['data_main']}.{encoder_short_name}.{combo['distance_fn']}.{combo['reducer']}"
         os.makedirs(combo['method_dir'], exist_ok=True)
     elif combo['method'] == "contrastive":
@@ -203,7 +203,6 @@ def main(args=None):
             num_epochs=combo["num_epochs"],
             lambda_weight=combo["lambda_weight"],
             method=combo["method"],
-
             # triplet loss
             # if combo["method"] == "semi-hard" else None,
             d_fn=combo["distance_fn"],
