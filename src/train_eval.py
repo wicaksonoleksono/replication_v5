@@ -134,6 +134,8 @@ def train(device,
         if method == "contrastive":
             sup_feat = torch.cat([og_feat, ag_feat])
             metric_loss = metric_fn(sup_feat)
+        if method == "SST":
+            metric_loss = metric_fn(og_feat, ag_feat)
         loss = lam * ce + (1 - lam) * metric_loss
         # Update progress bar with current losses
         progress_bar.set_postfix({

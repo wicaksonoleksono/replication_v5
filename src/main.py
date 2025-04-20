@@ -66,7 +66,7 @@ def main(args=None):
                     }
                     all_combinations.append(combo)
 
-            elif method_name == "semi-hard":
+            elif method_name == "semi-hard" or "SST":
                 fallback_vals = method_dict["fallback"]
                 margins = method_dict["margins"]
                 d_fns = method_dict["d_fn"]
@@ -140,7 +140,7 @@ def main(args=None):
             f"Expected num_epochs to be in the range [0, 6], got {combo['num_epochs']}"
 
         # Check method-specific parameters
-        if combo["method"] == "semi-hard":
+        if combo["method"] == "semi-hard" or "SST":
             assert combo["margin"] in [0.3, 0.4, 0.45], \
                 f"Expected margin to be in [0.3, 0.4, 0.45], got {combo['margin']}"
             assert isinstance(combo["fallback"], bool), \

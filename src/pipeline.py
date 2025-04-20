@@ -6,6 +6,7 @@ from modules import (set_seed,
                      prim_encoder_con,
                      SupConLoss,
                      SentenceTriplet,
+                     SST,
                      Metrics,
                      HistoryTracker,
                      TrainingVisualizer)
@@ -94,7 +95,7 @@ def pipeline(
     if method == "contrastive":
         output_path = (
             f"{method_dir}/_lr{learning_rate}_lam{lambda_weight}_temp{temperature}")
-    elif method == "semi-hard":
+    elif method == "semi-hard" or "SST":
         if reducer in ["softmax", "adapt_softmax"]:
             output_path = (
                 f"{method_dir}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}_b{beta}_fb{fallback}")
@@ -114,7 +115,10 @@ def pipeline(
     elif method == "semi-hard":
         metric_fn = SentenceTriplet(
             margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn)
-    # lr scheduler
+    elif method == "SST":
+        metric_fn = SST(
+            margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn)
+        # lr scheduler
     num_training_steps = int(len(train_iter)*num_epochs)
     lr_scheduler = get_linear_schedule_with_warmup(
         optimizer,
