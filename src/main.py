@@ -160,14 +160,22 @@ def main(args=None):
                 f"Expected temperature to be 0.3 for contrastive method, got {combo['temperature']}"
         else:
             raise ValueError(f"Unsupported method: {combo['method']}")
+        if combo['method'] in ("semi_hard", "SST"):
+            combo['method_dir'] = (
+                f"{output_base}.{combo['method']}."
+                f"{combo['data_main']}.{encoder_short_name}."
+                f"{combo['distance_fn']}.{combo['reducer']}"
+            )
+            os.makedirs(combo['method_dir'], exist_ok=True)
 
-    if combo['method'] == "semi_hard" or "SST":
-        combo['method_dir'] = f"{output_base}.{combo['method']}.{combo['data_main']}.{encoder_short_name}.{combo['distance_fn']}.{combo['reducer']}"
-        os.makedirs(combo['method_dir'], exist_ok=True)
-    elif combo['method'] == "contrastive":
-        # nnti diganti
-        combo['method_dir'] = f"{output_base}.{combo['method']}.{combo['data_main']}.{encoder_short_name}"
-        os.makedirs(combo['method_dir'], exist_ok=True)
+        elif combo['method'] == "contrastive":
+            combo['method_dir'] = (
+                f"{output_base}.{combo['method']}."
+                f"{combo['data_main']}.{encoder_short_name}"
+            )
+            os.makedirs(combo['method_dir'], exist_ok=True)
+        else:
+            raise ValueError(f"Unknown method: {combo['method']}")
     print(f"method dir :{combo['method_dir']}")
     progress_path = os.path.join(combo['method_dir'], "progress.json")
     total_combos = len(all_combinations)

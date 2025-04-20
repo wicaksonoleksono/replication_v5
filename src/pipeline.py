@@ -92,10 +92,12 @@ def pipeline(
         _, _, dyna_test = get_dataloader_dynahate(
             train_batch_size=batch_size, eval_batch_size=batch_size, base_data_path=data_path)
     encoder_short_name = "bert" if "bert-base-uncased" in encoder_name else "hatebert"
+    if method_dir is None:
+        raise (ValueError(f"No such method dir{method_dir}"))
     if method == "contrastive":
         output_path = (
             f"{method_dir}/_lr{learning_rate}_lam{lambda_weight}_temp{temperature}")
-    elif method == "semi-hard" or "SST":
+    elif method in ["semi-hard", "SST"]:
         if reducer in ["softmax", "adapt_softmax"]:
             output_path = (
                 f"{method_dir}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}_b{beta}_fb{fallback}")
