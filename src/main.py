@@ -147,8 +147,8 @@ def main(args=None):
                 f"Expected fallback to be a boolean, got {combo['fallback']}"
             assert combo["reducer"] in ["mean", "sum", "softmax", "adapt_softmax"], \
                 f"Expected reducer to be one of ['mean', 'sum', 'softmax', 'adapt_softmax'], got {combo['reducer']}"
-            assert combo["distance_fn"] in ["angular", "cos", "chord", "scaled_chord"], \
-                f"Expected distance_fn to be either 'angular' or 'cos','chord','scaled_chord' got {combo['distance_fn']}"
+            assert combo["distance_fn"] in ["angular", "cos", "chord", "scaled_chord", "maha"], \
+                f"Expected distance_fn to be either 'angular' or 'cos','chord','scaled_chord','maha' got {combo['distance_fn']}"
             if combo["reducer"] in ["softmax", "adapt_softmax"]:
                 assert 5 <= combo["beta"] <= 15, \
                     f"Expected beta to be in the range [5, 15], got {combo['beta']}"
@@ -160,7 +160,7 @@ def main(args=None):
                 f"Expected temperature to be 0.3 for contrastive method, got {combo['temperature']}"
         else:
             raise ValueError(f"Unsupported method: {combo['method']}")
-        if combo['method'] in ("semi_hard", "SST"):
+        if combo['method'] in ("semi-hard", "SST"):
             combo['method_dir'] = (
                 f"{output_base}.{combo['method']}."
                 f"{combo['data_main']}.{encoder_short_name}."

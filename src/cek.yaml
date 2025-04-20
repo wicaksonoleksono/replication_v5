@@ -16,13 +16,13 @@ num_epochs: !!int 6
 data_mains:
   - name: "ihc"
     methods:
-      - name: "SST"
-        d_fn: ["cos"]
+      - name: "semi-hard"
+        d_fn: ["maha"]
         fallback: [!!bool true]
         margins: [!!float 0.3]
         reducers:
           - name: "softmax"
-            beta_values: [!!int 10, !!int 5]
+            beta_values: [!!int 15, !!int 10, !!int 5]
 # reducers            : softmax
 # lambda weights      : 0.25
 
