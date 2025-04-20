@@ -7,21 +7,24 @@ class RunningWhiten(nn.Module):
     def __init__(self, dim, ema=0.01, eps=1e-4):
         super().__init__()
         self.register_buffer("cov", torch.eye(dim))
+        self.register_buffer("mu", torch.zeros(dim))
+        self.register_buffer("L",   torch.eye(dim))     # chol(Σ⁻¹)
         self.ema, self.eps = ema, eps           # eps → numerical safety
         # Exponential Moving Average
 
-    def update(self, z):                        # z : (B, D)
-        with torch.no_grad():
-            mu = z.mean(0, keepdim=True)
-            dz = z - mu
-            batch_cov = dz.t() @ dz / max(len(z) - 1, 1)
-            self.cov.mul_(1 - self.ema).add_(self.ema * batch_cov)
+    @torch.no_grad()
+    def update(self, z):
+        batch_mu = z.mean(0)
+        self.mu = (1 - self.ema) * self.mu + self.ema * batch_mu
+        dz = z - batch_mu
+        batch_cov = dz.T @ dz / max(len(z) - 1, 1)
+        self.cov = (1 - self.ema) * self.cov + self.ema * batch_cov
+
+        cov_reg = self.cov + self.eps * torch.eye(self.cov.size(0), device=z.device)
+        self.L = torch.linalg.cholesky(torch.linalg.inv(cov_reg))
 
     def whiten(self, z):
-        L = torch.linalg.cholesky(torch.linalg.inv(
-            self.cov + self.eps * torch.eye(self.cov.size(0),
-                                            device=z.device)))
-        return z @ L.T
+        return (z - self.mu) @ self.L.T
 
 
 class SentenceTriplet(nn.Module):
