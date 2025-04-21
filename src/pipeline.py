@@ -116,7 +116,7 @@ def pipeline(
         metric_fn = SupConLoss(temperature=temperature)
     elif method == "semi-hard":
         metric_fn = SentenceTriplet(
-            margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn)
+            margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn, emb_dim=768)
     elif method == "SST":
         metric_fn = SST(
             margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn)

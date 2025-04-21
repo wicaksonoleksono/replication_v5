@@ -17,12 +17,12 @@ data_mains:
   - name: "ihc"
     methods:
       - name: "semi-hard"
-        d_fn: ["maha"]
+        d_fn: ["cos_w"]
         fallback: [!!bool true]
         margins: [!!float 0.3]
         reducers:
           - name: "softmax"
-            beta_values: [!!int 15, !!int 10, !!int 5]
+            beta_values: [!!int 10]
 # reducers            : softmax
 # lambda weights      : 0.25
 

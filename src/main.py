@@ -138,7 +138,6 @@ def main(args=None):
             f"Expected batch_size to be one of [8, 16, 32], got {combo['batch_size']}"
         assert 0 <= combo["num_epochs"] <= 6, \
             f"Expected num_epochs to be in the range [0, 6], got {combo['num_epochs']}"
-
         # Check method-specific parameters
         if combo["method"] == "semi-hard" or "SST":
             assert combo["margin"] in [0.3, 0.4, 0.45], \
@@ -147,7 +146,7 @@ def main(args=None):
                 f"Expected fallback to be a boolean, got {combo['fallback']}"
             assert combo["reducer"] in ["mean", "sum", "softmax", "adapt_softmax"], \
                 f"Expected reducer to be one of ['mean', 'sum', 'softmax', 'adapt_softmax'], got {combo['reducer']}"
-            assert combo["distance_fn"] in ["angular", "cos", "chord", "scaled_chord", "maha"], \
+            assert combo["distance_fn"] in ["angular", "cos", "angular_w", "cos_w", "chord", "scaled_chord", "maha"], \
                 f"Expected distance_fn to be either 'angular' or 'cos','chord','scaled_chord','maha' got {combo['distance_fn']}"
             if combo["reducer"] in ["softmax", "adapt_softmax"]:
                 assert 5 <= combo["beta"] <= 15, \
