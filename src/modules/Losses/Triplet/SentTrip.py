@@ -78,9 +78,6 @@ class SentenceTriplet(nn.Module):
             eps = max(1e-6, 0.001 * (max_sim - min_sim))
         safe_sim = torch.clamp(sim_matrix, -1.0 + eps, 1.0 - eps)
         return torch.acos(safe_sim)
-    # def angular_distance(u, v, eps=1e-7):          # 0 … π
-    #     cos = (u * v).sum(-1).clamp(-1+eps, 1-eps)
-    #     return torch.acos(cos)
 
     def _mean_reducer(self, loss, valid_count):
         return loss.sum() / (valid_count + 1e-7)
@@ -151,3 +148,6 @@ class SentenceTriplet(nn.Module):
     #     # adding non linear profile
     #     scaled = torch.exp(dot / self.margin)
     #     return torch.sqrt(2 - 2 * scaled)
+  # def angular_distance(u, v, eps=1e-7):          # 0 … π
+    #     cos = (u * v).sum(-1).clamp(-1+eps, 1-eps)
+    #     return torch.acos(cos)
