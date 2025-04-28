@@ -8,7 +8,7 @@ np.random.seed(0)
 random.seed(0)
 
 
-class aggregate_ihc:
+class aggregation_ihc:
     def __init__(self, load_dir, output_dir):
         self.load_dir = load_dir
         self.output_dir = output_dir

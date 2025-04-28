@@ -22,7 +22,6 @@ def main(args=None):
     parsed_args = parse_args(args)
     config = load_config(parsed_args.config)
     # 1. Glob param .
-
     data_path = config.get("data_path")  # str
     output_base = config.get("output_base")  # str
 

@@ -1,5 +1,5 @@
 data_path: "dataset/preproceessed"
-output_base: "output"
+output_base: "log/outpu"
 seed: !!int 0
 
 encoders:

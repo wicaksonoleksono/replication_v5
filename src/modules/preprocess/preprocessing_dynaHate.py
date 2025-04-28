@@ -7,8 +7,10 @@ from transformers import AutoTokenizer
 
 np.random.seed(0)
 random.seed(0)
+
+
 class preprocessor_dyna:
-    def __init__(self, 
+    def __init__(self,
                  data_home='dataset/DynaHate',
                  tokenizer_type='bert-base-uncased',
                  output_dir='./dataset'):
@@ -18,6 +20,7 @@ class preprocessor_dyna:
         self.class2int = {'nothate': 0, 'hate': 1}
         self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_type)
         os.makedirs(self.output_dir, exist_ok=True)
+
     def _process_split(self, datatype):
         """Process a single data split (train/dev/test) following the reference logic."""
         datafile = os.path.join(self.data_home, f"{datatype}.csv")
@@ -25,13 +28,15 @@ class preprocessor_dyna:
         labels = [self.class2int[label] for label in data["label"]]
         posts = data["text"].tolist()
         print(f"Tokenizing {datatype} data...")
-        tokenized_posts = self.tokenizer.batch_encode_plus(posts,truncation=False,padding=False,add_special_tokens=True).input_ids
+        tokenized_posts = self.tokenizer.batch_encode_plus(
+            posts, truncation=False, padding=False, add_special_tokens=True).input_ids
         processed_data = {
             "tokenized_post": tokenized_posts,
             "label": labels,
             "post": posts
         }
         return pd.DataFrame.from_dict(processed_data)
+
     def process(self):
         data_dict = {}
         for datatype in ["train", "dev", "test"]:

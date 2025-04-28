@@ -26,7 +26,6 @@ class preprocessor_sbic:
         data["post"] = data["post"].fillna("")
         labels = [self.class2int[l] for l in data["offensiveLABEL"]]
         posts = data["post"].astype(str).tolist()
-        labels = [self.class2int[label] for label in data["offensiveLABEL"]]
         if datatype == "train" and self.aug_type == "imp":
             augmented_posts = []
             for _, row in data.iterrows():
@@ -48,7 +47,7 @@ class preprocessor_sbic:
             }
         else:
             print("Tokenizing data...")
-            tokenized_posts = self.tokenizer(posts, padding=True, truncation=True).input_ids
+            tokenized_posts = self.tokenizer.batch_encode_plus(posts).input_ids
             processed_data = {
                 "tokenized_post": tokenized_posts,
                 "post":           posts,

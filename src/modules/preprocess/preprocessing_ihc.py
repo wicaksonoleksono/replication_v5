@@ -7,8 +7,9 @@ from transformers import AutoTokenizer
 np.random.seed(0)
 random.seed(0)
 
-class preprocessor:
-    def __init__(self, 
+
+class preprocessor_ihc:
+    def __init__(self,
                  data_home='dataset/ihc_pure/',
                  tokenizer_type='bert-base-uncased',
                  augmentation='imp',
@@ -20,6 +21,7 @@ class preprocessor:
         self.class2int = {'not_hate': 0, 'implicit_hate': 1}
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_type)
         os.makedirs(output_dir, exist_ok=True)
+
     def _process_split(self, datatype):
         """Process a single data split (train/valid/test)"""
         datafile = os.path.join(self.data_home, f"{datatype}.tsv")
@@ -53,6 +55,7 @@ class preprocessor:
                 "label": labels,
                 "post": posts
             }
+
     def process(self):
         data_dict = {}
         for datatype in ["train", "valid", "test"]:
@@ -61,8 +64,8 @@ class preprocessor:
             data_dict[datatype] = pd.DataFrame.from_dict(processed_data)
         output_filename = f"ihc_{self.augmentation}_preprocessed_{self.tokenizer_type.split('-')[0]}.pkl"
         output_path = os.path.join(self.output_dir, output_filename)
-        
+
         with open(output_path, 'wb') as f:
             pickle.dump(data_dict, f)
-            
+
         print(f"Processing complete. Data saved to {output_path}")

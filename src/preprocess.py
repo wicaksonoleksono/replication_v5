@@ -2,9 +2,9 @@ import argparse
 import yaml
 import os
 # ======= Import your existing modules ======= #
-from modules import integration_dyna, preprocessor_dyna
-from modules import preprocessor, integrate
-from modules import integration_sbic, preprocessor_sbic
+from modules import preprocessor_dyna, aggregation_dynahate
+from modules import preprocessor_ihc, aggregation_ihc
+from modules import preprocessor_sbic, aggregation_sbic
 # from modules import perform_precluster
 import warnings
 warnings.simplefilter("ignore", FutureWarning)
@@ -21,7 +21,7 @@ def preprocess_dyna(data_home, out_dir, dyna_config):
         f"[INFO] Processing DynaHate data with data_home={data_home}, out_dir={out_dir}")
     print(
         f"      Using tokenizer={dyna_config['tokenizer_type']}, augmentation={dyna_config['augmentation']}")
-    dataset_processor = integration_dyna(
+    dataset_processor = aggregation_dynahate(
         load_dir=os.path.join(data_home, "DynaHate"))
     dataset_processor.process()
     preproc = preprocessor_dyna(
@@ -38,12 +38,12 @@ def preprocess_ihc(data_home, out_dir, ihc_config):
         f"[INFO] Processing IHC data with data_home={data_home}, out_dir={out_dir}")
     print(
         f"      Using tokenizer={ihc_config['tokenizer_type']}, augmentation={ihc_config['augmentation']}")
-    i = integrate(
+    i = aggregation_ihc(
         load_dir=os.path.join(data_home, "implicit-hate-corpus"),
         output_dir=out_dir
     )
     i.run()
-    p = preprocessor(
+    p = preprocessor_ihc(
         # or if integration writes to data_home
         data_home=os.path.join(out_dir, "ihc_pure"),
         tokenizer_type=ihc_config["tokenizer_type"],
@@ -59,7 +59,7 @@ def preprocess_sbic(data_home, out_dir, sbic_config):
         f"[INFO] Processing SBIC data with data_home={data_home}, out_dir={out_dir}")
     print(
         f"      Using tokenizer={sbic_config['tokenizer_type']}, augmentation={sbic_config['augmentation']}")
-    i = integration_sbic(
+    i = aggregation_sbic(
         load_dir=os.path.join(data_home, "SBIC"),
         output_dir=os.path.join(out_dir, "sbic_pure")
     )
@@ -78,7 +78,7 @@ def preprocess_sbic(data_home, out_dir, sbic_config):
 
 def main(args_list=None):
     parser = argparse.ArgumentParser(
-        description="Run data integration + preprocessing for DynaHate, IHC, and SBIC with YAML config."
+        description="Run data integration + preprocessor for DynaHate, IHC, and SBIC with YAML config."
     )
     parser.add_argument("--config", type=str, required=True,
                         help="Path to the YAML configuration file.")
