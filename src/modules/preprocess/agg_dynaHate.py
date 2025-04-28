@@ -1,7 +1,8 @@
 import os
 import pandas as pd
 
-class integration_dyna:
+
+class aggregation_dynahate:
     def __init__(self, load_dir="dataset/DynaHate", dataset_filename="DynaHate_v0.2.2.csv"):
         self.load_dir = load_dir
         self.dataset_filename = dataset_filename
@@ -10,6 +11,7 @@ class integration_dyna:
         self.train = None
         self.dev = None
         self.test = None
+
     def load_dataset(self):
         self.dataset = pd.read_csv(self.dataset_path, delimiter=',', header=0)
         # Drop the first column (assuming it's an index column)
@@ -27,7 +29,7 @@ class integration_dyna:
         return self.train, self.dev, self.test
 
     def save_splits(self, output_dir=None):
- 
+
         if output_dir is None:
             output_dir = self.load_dir
         os.makedirs(output_dir, exist_ok=True)
@@ -37,9 +39,8 @@ class integration_dyna:
         self.train.to_csv(os.path.join(output_dir, "train.csv"), sep=",", index=False)
         self.dev.to_csv(os.path.join(output_dir, "dev.csv"), sep=",", index=False)
         self.test.to_csv(os.path.join(output_dir, "test.csv"), sep=",", index=False)
+
     def process(self):
         self.load_dataset()
         self.split_dataset()
         self.save_splits()
-
-

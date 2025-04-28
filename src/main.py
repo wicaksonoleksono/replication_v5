@@ -57,6 +57,7 @@ def main(args=None):
                         "method_dir": None,
                         # method-specific
                         "temperature": temp,
+                        "am": None,
                         "margin": None,
                         "fallback": None,
                         "reducer": None,
@@ -70,8 +71,9 @@ def main(args=None):
                 fallback_vals = method_dict["fallback"]
                 margins = method_dict["margins"]
                 d_fns = method_dict["d_fn"]
+                raw_am = method_dict.get("angular_margin", [])
+                am_values = raw_am if isinstance(raw_am, list) else [raw_am]
                 reducers_list = method_dict["reducers"]
-
                 all_reducer_beta_pairs = []
                 for r in reducers_list:
                     if isinstance(r, str):
@@ -91,8 +93,8 @@ def main(args=None):
                         else:
                             all_reducer_beta_pairs.append((name, None))
                 print(all_reducer_beta_pairs)
-
-                # You now iterate over `d_fns` as well in the product
+                suffixes = ("_f", "_fw")
+                all_combinations = []
                 for (enc, lr, marg, lam, fb, d_fn, (reducer_name, beta_val)) in product(
                     encoders,
                     learning_rates,
@@ -102,29 +104,31 @@ def main(args=None):
                     d_fns,
                     all_reducer_beta_pairs
                 ):
-                    combo = {
-                        "data_main": data_main_name,
-                        "method": method_name,
-
-                        "encoder": enc,
-                        "learning_rate": lr,
-                        "lambda_weight": lam,
-                        "batch_size": batch_size,
-                        "num_epochs": num_epochs,
-                        "method_dir": None,
-
-                        # method-specific
-                        "temperature": None,
-
-                        "margin": marg,
-                        "fallback": fb,
-                        "reducer": reducer_name,
-                        "beta": beta_val,
-                        "distance_fn": d_fn
-                    }
-
-                    all_combinations.append(combo)
-
+                    if any(d_fn.endswith(s) for s in suffixes):
+                        am_iter = am_values
+                    else:
+                        am_iter = [None]
+                    for am in am_iter:
+                        combo = {
+                            "data_main":    data_main_name,
+                            "method":       method_name,
+                            "encoder":      enc,
+                            "learning_rate": lr,
+                            "lambda_weight": lam,
+                            "batch_size":   batch_size,
+                            "num_epochs":   num_epochs,
+                            "method_dir":   None,
+                            # method-specific
+                            "temperature":  None,
+                            "am":           am,
+                            "margin":       marg,
+                            "fallback":     fb,
+                            "reducer":      reducer_name,
+                            "beta":         beta_val,
+                            "distance_fn":  d_fn
+                        }
+                        all_combinations.append(combo)
+    print(combo)
     for combo in all_combinations:
         encoder_short_name = "bert" if "bert-base-uncased" in combo["encoder"] else "hatebert"
 
@@ -139,31 +143,32 @@ def main(args=None):
         assert 0 <= combo["num_epochs"] <= 6, \
             f"Expected num_epochs to be in the range [0, 6], got {combo['num_epochs']}"
         # Check method-specific parameters
-        if combo["method"] == "semi-hard" or "SST":
-            assert combo["margin"] in [0.3, 0.4, 0.45], \
-                f"Expected margin to be in [0.3, 0.4, 0.45], got {combo['margin']}"
+        if combo["method"] in ("semi-hard", "SST"):
+            assert 0.0 <= combo["margin"] <= 1.0, f"Expected margin between 0 and 1, got {combo['margin']}"
             assert isinstance(combo["fallback"], bool), \
                 f"Expected fallback to be a boolean, got {combo['fallback']}"
             assert combo["reducer"] in ["mean", "sum", "softmax", "adapt_softmax"], \
                 f"Expected reducer to be one of ['mean', 'sum', 'softmax', 'adapt_softmax'], got {combo['reducer']}"
-            assert combo["distance_fn"] in ["angular", "cos", "angular_w", "cos_w", "chord", "scaled_chord", "maha"], \
+            assert combo["distance_fn"] in ["angular", "cos", "angular_w", "cos_w", "maha", "angular_f", "cos_f", "angular_fw", "cos_fw"], \
                 f"Expected distance_fn to be either 'angular' or 'cos','chord','scaled_chord','maha' got {combo['distance_fn']}"
             if combo["reducer"] in ["softmax", "adapt_softmax"]:
-                assert 5 <= combo["beta"] <= 15, \
-                    f"Expected beta to be in the range [5, 15], got {combo['beta']}"
+                assert 1 <= combo["beta"] <= 15, f"Expected beta to be in the range [5, 15], got {combo['beta']}"
             else:
                 assert combo["beta"] is None, \
                     "For reducers other than 'softmax' or 'adapt_softmax', beta must be None."
+
         elif combo["method"] == "contrastive":
             assert combo["temperature"] == 0.3, \
                 f"Expected temperature to be 0.3 for contrastive method, got {combo['temperature']}"
         else:
             raise ValueError(f"Unsupported method: {combo['method']}")
+
         if combo['method'] in ("semi-hard", "SST"):
             combo['method_dir'] = (
-                f"{output_base}.{combo['method']}."
-                f"{combo['data_main']}.{encoder_short_name}."
-                f"{combo['distance_fn']}.{combo['reducer']}"
+                f"{output_base}.{combo['method']}.{combo['data_main']}.{encoder_short_name}."
+                f"{combo['distance_fn']}"
+                f"{'.a_marg' + str(combo['am']) if combo['distance_fn'].endswith(('_f','_fw')) else ''}."
+                f"{combo['reducer']}"
             )
             os.makedirs(combo['method_dir'], exist_ok=True)
 
@@ -215,6 +220,7 @@ def main(args=None):
             d_fn=combo["distance_fn"],
             margin=combo["margin"],
             beta=combo["beta"],  # if combo["method"] == "semi-hard" else None,
+            am=combo['am'],
             # if combo["method"] == "semi-hard" else None,
             reducer=combo["reducer"],
             # if combo["method"] == "semi-hard" else None,

@@ -40,6 +40,7 @@ def run_testing(model, data_main, tracker, output_path, device, ihc_test, sbic_t
             is_testing=True,
             data_iter=data_iter,
             test_name=test_name,
+            f1_train=None,
             model=model,
             ce_fn=ce_fn,
             tracker=tracker,
@@ -68,6 +69,7 @@ def pipeline(
 
         # triplet loss
         margin: float,
+        am: float,
         d_fn: str,
         beta: int,
         reducer: str,
@@ -116,18 +118,16 @@ def pipeline(
         metric_fn = SupConLoss(temperature=temperature)
     elif method == "semi-hard":
         metric_fn = SentenceTriplet(
-            margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn, emb_dim=768)
+            margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn, ang_margin=am, emb_dim=768)
     elif method == "SST":
         metric_fn = SST(
             margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn)
-        # lr scheduler
     num_training_steps = int(len(train_iter)*num_epochs)
     lr_scheduler = get_linear_schedule_with_warmup(
         optimizer,
         num_warmup_steps=0,
         num_training_steps=num_training_steps
     )
-    # Building model initializing losses and such .
 
     metrics = Metrics()
     tracker = HistoryTracker.load(output_path)
@@ -163,7 +163,7 @@ def pipeline(
         return  # Keep this return
     for epoch in range(start_epoch, num_epochs+1):
         print(f"\n🚀 Epoch {epoch}/{num_epochs}")
-        current_f1 = train(
+        current_f1, train_f1 = train(
             device=device,
             method=method,
             epoch=epoch,
@@ -179,7 +179,7 @@ def pipeline(
             tracker=tracker,
             metrics=metrics
         )
-        if tracker.best_f1_score(epoch, current_f1, model, optimizer):
+        if tracker.best_f1_score(epoch, current_f1, train_f1, model, optimizer):
             print(
                 f"🏆 New best model at epoch {epoch} with F1: {current_f1:.4f}")
         tracker.save()

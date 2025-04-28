@@ -96,7 +96,7 @@ class HistoryTracker:
             "average_loss": avg_loss,
         })
 
-    def best_f1_score(self, epoch, current_f1, model, optimizer):
+    def best_f1_score(self, epoch, current_f1, train_f1, model, optimizer):
         """Save best model and delete previous best if exists"""
         if current_f1 is None or not isinstance(current_f1, (int, float)):
             raise ValueError(f"Invalid F1 score: {current_f1}")
@@ -105,7 +105,7 @@ class HistoryTracker:
         if not isinstance(current_best, (int, float)):
             current_best = -1
         # Comparison with safe values
-        if current_f1 > current_best:
+        if (current_f1 > current_best) and ((train_f1 - current_f1) < 12):
             # Delete previous best model if exists
             previous_best = self.history["best"].get("path")
             if previous_best and os.path.exists(previous_best):

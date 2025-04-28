@@ -1,8 +1,9 @@
 data_path: "dataset/preproceessed"
 output_base: "output"
 seed: !!int 0
+
 encoders:
-  - "bert-base-uncased"
+  - "GroNLP/hateBERT"
 learning_rates:
   - !!float 2e-5
 lambda_weights:
@@ -10,7 +11,7 @@ lambda_weights:
 batch_size: !!int 8
 num_epochs: !!int 6
 data_mains:
-  - name: "ihc"
+  - name: "sbic"
     methods:
       - name: "contrastive"
         temperatures: [!!float 0.3]

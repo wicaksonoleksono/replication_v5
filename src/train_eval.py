@@ -18,6 +18,7 @@ def evaluate(
     model,
     ce_fn,
     tracker,
+    f1_train,
     # Validation-specific params (required when is_testing=False)
     optimizer=None,
     epoch=None,
@@ -90,6 +91,7 @@ def evaluate(
             tracker.best_f1_score(
                 epoch=epoch,
                 current_f1=final_metrics["f1_macro"],
+                train_f1=f1_train,
                 model=model,
                 optimizer=optimizer
             )
@@ -169,7 +171,7 @@ def train(device,
         is_validation=False
     )
     avg_loss_valid, computed_valid_metrics = evaluate(
-        device=device, epoch=epoch, data_iter=val_loader, model=model, ce_fn=ce_fn, tracker=tracker, optimizer=optimizer, is_testing=False)
+        device=device, epoch=epoch, data_iter=val_loader, model=model, ce_fn=ce_fn, tracker=tracker, optimizer=optimizer, f1_train=computed_train_metrics['f1_macro'], is_testing=False)
     print(f"Epoch {epoch} completed. \n"
           f"Training Loss: {avg_train_loss:.4f}, \n"
           f"Validation Loss: {avg_loss_valid:.4f}, \n"
@@ -179,4 +181,4 @@ def train(device,
           f"Validation F1 Score: {computed_valid_metrics['f1_macro']:.2%}\n")
     tracker.save_model(model, optimizer, epoch, lr_scheduler)
     tracker.save()
-    return computed_valid_metrics["f1_macro"]
+    return computed_valid_metrics["f1_macro"], computed_train_metrics["f1_macro"]

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from functools import partial
+import math
 
 
 class RunningWhiten(nn.Module):
@@ -41,18 +42,16 @@ class RunningWhiten(nn.Module):
 
 class SentenceTriplet(nn.Module):
     def __init__(self, margin, reducers, use_fallback,
-                 beta, d_fn, emb_dim, ema=0.1):
+                 beta, d_fn, emb_dim, ang_margin,  ema=0.01):
         super().__init__()
-        self.margin, self.reducers = margin, reducers
+        self.margin, self.reducers, self.ang_margin = margin, reducers, ang_margin
         self.use_fallback, self.beta, self.d_fn = use_fallback, beta, d_fn
         if d_fn in ("maha", "cos_w", "angular_w"):
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             self.whitener = RunningWhiten(emb_dim, ema).to(device)
 
     def _cosine_sim(self, x, y):
-        x_norm = x / (torch.norm(x, p=2, dim=1, keepdim=True) + 1e-8)
-        y_norm = y / (torch.norm(y, p=2, dim=1, keepdim=True) + 1e-8)
-        return torch.mm(x_norm, y_norm.T)
+        return torch.mm(x, y.T)
 
     def _maha_distance(self, x, y):
         xw, yw = self.whitener.whiten(x), self.whitener.whiten(y)
@@ -78,6 +77,25 @@ class SentenceTriplet(nn.Module):
             eps = max(1e-6, 0.001 * (max_sim - min_sim))
         safe_sim = torch.clamp(sim_matrix, -1.0 + eps, 1.0 - eps)
         return torch.acos(safe_sim)
+
+    def _additive_cosine_distance(self, x, y, eps=1e-7):
+        cos_theta = x @ y.T
+        cos_theta = cos_theta.clamp(-1.0 + eps, 1.0 - eps)
+        phi = cos_theta - self.ang_margin
+        phi = phi.clamp(-1.0 + eps, 1.0 - eps)
+        return torch.acos(phi)
+
+    def _additive_angular_distance(self, x, y, eps=1e-7):
+        cos_theta = x @ y.T
+        cos_theta = cos_theta.clamp(-1.0 + eps, 1.0 - eps)
+        sin_theta = torch.sqrt(1.0 - cos_theta.pow(2))
+        cos_m = math.cos(self.ang_margin)
+        sin_m = math.sin(self.ang_margin)
+        th = math.cos(math.pi - self.ang_margin)
+        mm = math.sin(math.pi - self.ang_margin) * self.ang_margin
+        phi = cos_theta * cos_m - sin_theta * sin_m
+        phi = torch.where(cos_theta > th, phi, cos_theta - mm)
+        return torch.acos(phi)
 
     def _mean_reducer(self, loss, valid_count):
         return loss.sum() / (valid_count + 1e-7)
@@ -105,16 +123,17 @@ class SentenceTriplet(nn.Module):
         if self.d_fn in ("maha", "coswhite", "angwhite"):
             self.whitener.update(torch.cat([og_feat.detach(), ag_feat.detach()], 0))
         match self.d_fn:
-            case "cos":                 dist = lambda x, y: self._cosine_distance(x, y, w=False)
+            case "cos":                 dist = lambda x, y:  self._cosine_distance(x, y, w=False)
             case "angular":             dist = lambda x, y: self._angular_distance(x, y, w=False)
             case "cos_w":               dist = lambda x, y: self._cosine_distance(x, y, w=True)
             case "angular_w":           dist = lambda x, y: self._angular_distance(x, y, w=True)
+            case "angular_f":          dist = lambda x, y: self._additive_angular_distance(x, y)
+            case "cos_f":              dist = lambda x, y: self._additive_cosine_distance(x, y)
             case "maha":                dist = self._maha_distance
             case _:
                 raise ValueError(f"unknown d_fn {self.d_fn}")
-        d_ap = dist(og_feat, ag_feat).diag()           # (B,)
-        d_an = dist(og_feat, og_feat)                  # (B,B)
-
+        d_ap = dist(og_feat, ag_feat).diag()
+        d_an = dist(og_feat, og_feat)
         device, B = og_feat.device, og_feat.size(0)
         labels = labels.view(-1)
         eye_mask = ~torch.eye(B, dtype=torch.bool, device=device)
@@ -124,7 +143,6 @@ class SentenceTriplet(nn.Module):
         d_an_semi = torch.where(semi_mask, d_an, torch.full_like(d_an, float('inf')))
         min_neg, _ = torch.min(d_an_semi, 1)
         valid = min_neg < float('inf')
-
         if not valid.any():
             if not self.use_fallback:
                 return (og_feat * 0.0).sum() + (ag_feat * 0.0).sum()
@@ -138,16 +156,3 @@ class SentenceTriplet(nn.Module):
                 return self._apply_reducer(loss_terms, valid_hard.sum().float())
         loss_terms = F.relu(d_ap[valid] - min_neg[valid] + self.margin)
         return self._apply_reducer(loss_terms, valid.sum().float())
-
-    # def _chord_distance(self, x, y):
-    #     theta = self._angular_distance(x, y)
-    #     return 2 * torch.sin(theta / 2)
-
-    # def _scaled_chord(self, x, y):
-    #     dot = torch.mm(x, y)
-    #     # adding non linear profile
-    #     scaled = torch.exp(dot / self.margin)
-    #     return torch.sqrt(2 - 2 * scaled)
-  # def angular_distance(u, v, eps=1e-7):          # 0 … π
-    #     cos = (u * v).sum(-1).clamp(-1+eps, 1-eps)
-    #     return torch.acos(cos)

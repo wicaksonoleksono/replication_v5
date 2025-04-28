@@ -7,8 +7,7 @@ from transformers import AutoTokenizer
 class preprocessor_sbic:
     def __init__(self,
                  dataset="sbic",
-                 # Set to None if you do not want augmentation.
-                 aug_type="full",
+                 aug_type="imp",
                  data_home="../dataset/sbic_pure/",
                  tokenizer_type="bert-base-uncased",
                  output_dir="preprocessed_data"):
@@ -23,61 +22,38 @@ class preprocessor_sbic:
 
     def _process_split(self, datatype):
         datafile = os.path.join(self.data_home, f"{datatype}.csv")
-        data = pd.read_csv(datafile, sep=',')
-
-        # Ensure that missing posts are filled with empty strings.
+        data = pd.read_csv(datafile, sep=',').fillna('')
         data["post"] = data["post"].fillna("")
-        if self.dataset == "sbic_imp":
-            data = data.fillna('')
-
-        # Convert the posts to strings.
+        labels = [self.class2int[l] for l in data["offensiveLABEL"]]
         posts = data["post"].astype(str).tolist()
         labels = [self.class2int[label] for label in data["offensiveLABEL"]]
-
-        # If processing the train split and augmentation is desired.
-        if datatype == "train" and self.aug_type is not None:
-            if self.aug_type == "aug":
-                augmented_posts = data["aug_sent1_of_post"].fillna(
-                    "").astype(str).tolist()
-            elif self.aug_type == "imp":
-                augmented_posts = []
-                for i in range(len(data)):
-                    selected = str(data["selectedStereotype"].iloc[i]).strip()
-                    if selected:  # Use the selected stereotype if available.
-                        augmented_posts.append(selected)
-                    else:
-                        aug_text = str(
-                            data["aug_sent1_of_post"].iloc[i]).strip()
-                        augmented_posts.append(aug_text)
-            else:
-                raise ValueError(f"Unknown augmentation type: {self.aug_type}")
-
+        if datatype == "train" and self.aug_type == "imp":
+            augmented_posts = []
+            for _, row in data.iterrows():
+                sel = row["selectedStereotype"].strip()
+                if sel:
+                    augmented_posts.append(sel)
+                else:
+                    augmented_posts.append(row["aug_sent1_of_post"].strip())
             print("Tokenizing data (with augmentation)...")
-            tokenized_posts = self.tokenizer.batch_encode_plus(posts).input_ids
-            tokenized_augmented = self.tokenizer.batch_encode_plus(
-                augmented_posts).input_ids
-
-            # Combine the original and augmented data into pairs.
-            tokenized_combined = [list(pair) for pair in zip(
-                tokenized_posts, tokenized_augmented)]
-            combined_posts = [list(pair)
-                              for pair in zip(posts, augmented_posts)]
-            combined_labels = [list(pair) for pair in zip(labels, labels)]
-
+            tokenized_posts = self.tokenizer(posts,    padding=True, truncation=True).input_ids
+            tokenized_augments = self.tokenizer(augmented_posts, padding=True, truncation=True).input_ids
+            tokenized_combined = [list(pair) for pair in zip(tokenized_posts, tokenized_augments)]
+            combined_posts = [[a, b] for a, b in zip(posts, augmented_posts)]
+            combined_labels = [[y, y] for y in labels]
             processed_data = {
                 "tokenized_post": tokenized_combined,
-                "label": combined_labels,
-                "post": combined_posts
+                "post":           combined_posts,
+                "label":          combined_labels
             }
         else:
             print("Tokenizing data...")
-            tokenized_posts = self.tokenizer.batch_encode_plus(posts).input_ids
+            tokenized_posts = self.tokenizer(posts, padding=True, truncation=True).input_ids
             processed_data = {
                 "tokenized_post": tokenized_posts,
-                "label": labels,
-                "post": posts
+                "post":           posts,
+                "label":          labels
             }
-
         return pd.DataFrame.from_dict(processed_data)
 
     def process(self):
