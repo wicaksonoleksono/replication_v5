@@ -1,6 +1,3 @@
-# marg : 0.3,
-# beta : 15
-# method : cos
 data_path: "dataset/preproceessed"
 output_base: "output"
 seed: !!int 0

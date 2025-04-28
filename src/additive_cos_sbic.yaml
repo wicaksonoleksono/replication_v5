@@ -1,11 +1,8 @@
-# marg : 0.3,
-# beta : 15
-# method : cos
 data_path: "dataset/preproceessed"
 output_base: "output"
 seed: !!int 0
 encoders:
-  - "bert-base-uncased"
+  - "GroNLP/hateBERT"
 learning_rates:
   - !!float 2e-5
 lambda_weights:
@@ -16,7 +13,8 @@ data_mains:
   - name: "ihc"
     methods:
       - name: "semi-hard"
-        d_fn: ["cos"]
+        d_fn: ["cos_f"]
+        angular_margin: [!!float 0.35]
         fallback: [!!bool true]
         margins: [!!float 0.3]
         reducers:
