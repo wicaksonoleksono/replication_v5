@@ -4,7 +4,6 @@ conda activate <env_name>```
 ````
 
 python main.py --config "\*.yaml"
-
 python preprocess.py --config "./config_preprocess.yaml"
 
 or
@@ -33,15 +32,16 @@ python main.py --config "./config_semi_hard_sbic.yaml"
 new combo copy paste
 
 ```
-8x instances. Hopes it's good.
 python main.py --config "./configs/SBIC/config_semi_hard_sbic_bert_cos.yaml"
 python main.py --config "./configs/SBIC/config_semi_hard_sbic_hbert_ang.yaml"
 python main.py --config "./configs/SBIC/config_semi_hard_sbic_hbert_cos.yaml"
 python main.py --config "./configs/SBIC/config_semi_hard_sbic_bert_ang.yaml"
 python main.py --config "./configs/SBIC/others/config_semi_hard_sbic_bert_mean.yaml"
 python main.py --config "./configs/SBIC/others/config_semi_hard_sbic_hbert_mean.yaml"
-python main.py --config "./configs/contrastive_rest/config_contrastive_ihc.yaml"
-python main.py --config "./configs/contrastive_rest/config_contrastive_sbic.yaml"
+python main.py --config "./configs/additive_cos_sbic.yaml" v
+python main.py --config "./configs/additive_cos_Ihc.yaml"v
+
+
 ```
 
 ```
