@@ -87,12 +87,10 @@ class aggregation_sbic:
                 if pd.isna(df.loc[i, "targetStereotype"]) or df.loc[i, "targetStereotype"] == '':
                     group_attack_no_implied_statement += 1
                     continue
-
                 inferences = df.loc[i, "targetStereotype"].split(' [SEP] ')
                 target_minorities = df.loc[i, "targetMinority"].split(' [SEP] ')
                 new_inferences = []
                 for target_minority, inference in zip(target_minorities, inferences):
-                    # Use spaCy to get token annotations for the inference
                     doc = self.nlp(inference)
                     inference_annotations = [{'token': token.text, 'pos': token.pos_, 'tag': token.tag_}
                                              for token in doc]
@@ -179,6 +177,5 @@ class aggregation_sbic:
             sbic_train.loc[i, 'aug_sent2_of_post'] = self.aug.augment(one_post)
         print("Transforming implied statements for training data...")
         sbic_train = self._turn_implied_statements_to_explanations('trn', sbic_train)
-
         sbic_train.to_csv(os.path.join(self.output_dir, "train.csv"), index=False)
         print("Integration complete. Files saved to:", self.output_dir)

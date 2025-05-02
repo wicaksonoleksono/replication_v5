@@ -185,3 +185,20 @@ Pak arief :
   - ~~Apa itu model triplet? Apakah yang dimaksud itu siamese network model?~~
   - Mungkin bisa diberikan semacam pernyataan sederhana tentang bagaimana masing-masing komponen tersebut menyatu? Ini bisa dituliskan di bagian akhir dari Latar Belakang atau di bagian akhir dari Tinjauan Pustaka.
   - ~~Skenario pengujian perlu dilengkapi dengan parameter yang akan diujicobakan. Contoh: komponen metode yang akan digunakan, atau lebih detil lagi, nilai margin dalam semi-hard negative mining.~~
+
+```
+
+
+post: a string containing the text of the post that was annotated
+targetMinority: a string indicating the demographic group targeted
+targetStereotype: a string containing the implied statement
+offensiveYN: a string indicating if the post could be offensive to anyone. This is a categorical variable with three possible answers, ‘1.0’ if yes, ‘0.5’ if maybe, ‘0.0’ if no.
+whoTarget: a string, ‘0.0’ if the target is a group, ‘1.0’ if the target is an individual, and blank if the post is not offensive
+
+["post",
+ "offensiveYN",
+ "whoTarget",
+ "targetMinority",
+ "targetStereotype"]
+
+```

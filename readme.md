@@ -41,7 +41,6 @@ python main.py --config "./configs/SBIC/others/config_semi_hard_sbic_hbert_mean.
 python main.py --config "./configs/additive_cos_sbic.yaml" v
 python main.py --config "./configs/additive_cos_Ihc.yaml"v
 
-
 ```
 
 ```

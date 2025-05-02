@@ -100,9 +100,6 @@ class SentenceTriplet(nn.Module):
     def _mean_reducer(self, loss, valid_count):
         return loss.sum() / (valid_count + 1e-7)
 
-    def _sum_reducer(self, loss):
-        return loss.sum()
-
     def _softmax_pooling_reducer(self, loss_terms):
         if loss_terms.numel() == 0:
             return torch.tensor(0.0, device=loss_terms.device, dtype=loss_terms.dtype)
@@ -113,7 +110,6 @@ class SentenceTriplet(nn.Module):
     def _apply_reducer(self, loss_terms, valid_count):
         match self.reducers:
             case "mean": reducers = self._mean_reducer(loss_terms, valid_count)
-            case "sum": reducers = self._sum_reducer(loss_terms)
             case "softmax": reducers = self._softmax_pooling_reducer(loss_terms)
             case _:
                 raise ValueError(f"Unknown reducer: {self.reducers}")
@@ -152,7 +148,10 @@ class SentenceTriplet(nn.Module):
                 valid_hard = min_d_an_hard < float('inf')
                 if not valid_hard.any():
                     return (og_feat * 0.0).sum() + (ag_feat * 0.0).sum()
-                loss_terms = F.relu(d_ap[valid_hard] - min_d_an_hard[valid_hard] + self.margin)
+                if self.reducers.endswith("_sh"):
+                    loss_terms = d_ap[valid_hard] = min_d_an_hard[valid_hard]+self.margin
+                else:
+                    loss_terms = F.relu(d_ap[valid_hard] - min_d_an_hard[valid_hard] + self.margin)
                 return self._apply_reducer(loss_terms, valid_hard.sum().float())
         loss_terms = F.relu(d_ap[valid] - min_neg[valid] + self.margin)
         return self._apply_reducer(loss_terms, valid.sum().float())
