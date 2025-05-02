@@ -130,7 +130,6 @@ def main(args=None):
     print(combo)
     for combo in all_combinations:
         encoder_short_name = "bert" if "bert-base-uncased" in combo["encoder"] else "hatebert"
-
         assert combo["encoder"] in ["bert-base-uncased", "GroNLP/hateBERT"], \
             f"Expected encoder to be one of ['bert-base-uncased', 'GroNLP/hateBERT'], got {combo['encoder']}"
         assert combo["learning_rate"] == 2e-5, \
@@ -150,12 +149,11 @@ def main(args=None):
                 f"Expected reducer to be one of ['mean', 'sum', 'softmax', 'adapt_softmax'], got {combo['reducer']}"
             assert combo["distance_fn"] in ["angular", "cos", "angular_w", "cos_w", "maha", "angular_f", "cos_f", "angular_fw", "cos_fw"], \
                 f"Expected distance_fn to be either 'angular' or 'cos','chord','scaled_chord','maha' got {combo['distance_fn']}"
-            if combo["reducer"] in ["softmax", "adapt_softmax"]:
+            if combo["reducer"] in ["softmax", "softmax_sh", "mean", "sum"]:
                 assert 1 <= combo["beta"] <= 15, f"Expected beta to be in the range [5, 15], got {combo['beta']}"
             else:
                 assert combo["beta"] is None, \
                     "For reducers other than 'softmax' or 'adapt_softmax', beta must be None."
-
         elif combo["method"] == "contrastive":
             assert combo["temperature"] == 0.3, \
                 f"Expected temperature to be 0.3 for contrastive method, got {combo['temperature']}"

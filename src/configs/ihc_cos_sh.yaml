@@ -13,8 +13,7 @@ data_mains:
   - name: "ihc"
     methods:
       - name: "semi-hard"
-        d_fn: ["cos_f"]
-        angular_margin: [!!float 0.35]
+        d_fn: ["cos"]
         fallback: [!!bool true]
         margins: [!!float 0.3]
         reducers:
