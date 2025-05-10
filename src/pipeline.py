@@ -100,7 +100,7 @@ def pipeline(
         output_path = (
             f"{method_dir}/_lr{learning_rate}_lam{lambda_weight}_temp{temperature}")
     elif method in ["semi-hard", "SST"]:
-        if reducer in ["softmax", "adapt_softmax"]:
+        if reducer in ["softmax", "adapt_softmax", "softmax_sh"]:
             output_path = (
                 f"{method_dir}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}_b{beta}_fb{fallback}")
         else:
@@ -118,7 +118,7 @@ def pipeline(
         metric_fn = SupConLoss(temperature=temperature)
     elif method == "semi-hard":
         metric_fn = SentenceTriplet(
-            margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn, ang_margin=am, emb_dim=768)
+            margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn, ang_margin=am)
     elif method == "SST":
         metric_fn = SST(
             margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn)

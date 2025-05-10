@@ -5,72 +5,22 @@ from functools import partial
 import math
 
 
-class RunningWhiten(nn.Module):
-    def __init__(self, dim, ema=0.1, eps=1e-6):
-        super().__init__()
-        self.register_buffer("cov", torch.eye(dim))
-        self.register_buffer("mu", torch.zeros(dim))
-        self.register_buffer("L", torch.eye(dim))
-        self.ema, self.eps = ema, eps
-
-    @torch.no_grad()
-    def update(self, z):
-        device = z.device
-        if self.mu.device != device:
-            self.mu = self.mu.to(device)
-            self.cov = self.cov.to(device)
-            self.L = self.L.to(device)
-        batch_mu = z.mean(0)
-        self.mu = (1 - self.ema) * self.mu + self.ema * batch_mu
-        dz = z - batch_mu
-        batch_cov = dz.T @ dz / max(len(z) - 1, 1)
-        self.cov = (1 - self.ema) * self.cov + self.ema * batch_cov
-        scale = torch.trace(self.cov) / self.cov.size(0)
-        cov_reg = self.cov + self.eps * scale * torch.eye(self.cov.size(0), device=device)
-        try:
-            L_cov = torch.linalg.cholesky(cov_reg)
-        except RuntimeError as e:
-            print("Cholesky failed, adding more regularization.")
-            cov_reg += 1e-3 * scale * torch.eye(self.cov.size(0), device=device)
-            L_cov = torch.linalg.cholesky(cov_reg)
-        L_inv = torch.linalg.inv(L_cov.T)
-        self.L = L_inv.T
-
-    def whiten(self, z):
-        return (z - self.mu) @ self.L.T
-
-
 class SentenceTriplet(nn.Module):
     def __init__(self, margin, reducers, use_fallback,
-                 beta, d_fn, emb_dim, ang_margin,  ema=0.01):
+                 beta, d_fn, ang_margin):
         super().__init__()
         self.margin, self.reducers, self.ang_margin = margin, reducers, ang_margin
         self.use_fallback, self.beta, self.d_fn = use_fallback, beta, d_fn
-        if d_fn in ("maha", "cos_w", "angular_w"):
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            self.whitener = RunningWhiten(emb_dim, ema).to(device)
 
     def _cosine_sim(self, x, y):
         return torch.mm(x, y.T)
 
-    def _maha_distance(self, x, y):
-        xw, yw = self.whitener.whiten(x), self.whitener.whiten(y)
-        return torch.cdist(xw, yw, p=2)
-
-    def _cosine_distance(self, x, y, w):
-        if w == True:
-            xw, yw = self.whitener.whiten(x), self.whitener.whiten(y)
-            sim_matrix = self._cosine_sim(xw, yw)
-        else:
-            sim_matrix = self._cosine_sim(x, y)
+    def _cosine_distance(self, x, y):
+        sim_matrix = self._cosine_sim(x, y)
         return 1 - sim_matrix
 
-    def _angular_distance(self, x, y, w):
-        if w == True:
-            xw, yw = self.whitener.whiten(x), self.whitener.whiten(y)
-            sim_matrix = self._cosine_sim(xw, yw)
-        else:
-            sim_matrix = self._cosine_sim(x, y)
+    def _angular_distance(self, x, y):
+        sim_matrix = self._cosine_sim(x, y)
         with torch.no_grad():
             max_sim = sim_matrix.max().item()
             min_sim = sim_matrix.min().item()
@@ -103,29 +53,28 @@ class SentenceTriplet(nn.Module):
     def _softmax_pooling_reducer(self, loss_terms):
         if loss_terms.numel() == 0:
             return torch.tensor(0.0, device=loss_terms.device, dtype=loss_terms.dtype)
-        N = loss_terms.numel()
-        pooled_loss = (1.0 / self.beta) * torch.log(torch.mean(torch.exp(self.beta * loss_terms)))
-        return pooled_loss
+        return (1.0 / self.beta) * torch.log(torch.mean(torch.exp(self.beta * loss_terms)))
+
+    def _softplus_pool(self, loss_terms):
+        if loss_terms.numel() == 0:
+            return torch.tensor(0.0, device=loss_terms.device, dtype=loss_terms.dtype)
+        return (1.0/self.beta) * torch.log1p(torch.exp(self.beta * loss_terms).sum())
 
     def _apply_reducer(self, loss_terms, valid_count):
         match self.reducers:
             case "mean": reducers = self._mean_reducer(loss_terms, valid_count)
             case "softmax": reducers = self._softmax_pooling_reducer(loss_terms)
+            case "softmax_sh": reducers = self._softplus_pool(loss_terms)
             case _:
                 raise ValueError(f"Unknown reducer: {self.reducers}")
         return reducers
 
     def forward(self, og_feat, ag_feat, labels):
-        if self.d_fn in ("maha", "coswhite", "angwhite"):
-            self.whitener.update(torch.cat([og_feat.detach(), ag_feat.detach()], 0))
         match self.d_fn:
-            case "cos":                 dist = lambda x, y:  self._cosine_distance(x, y, w=False)
-            case "angular":             dist = lambda x, y: self._angular_distance(x, y, w=False)
-            case "cos_w":               dist = lambda x, y: self._cosine_distance(x, y, w=True)
-            case "angular_w":           dist = lambda x, y: self._angular_distance(x, y, w=True)
-            case "angular_f":          dist = lambda x, y: self._additive_angular_distance(x, y)
-            case "cos_f":              dist = lambda x, y: self._additive_cosine_distance(x, y)
-            case "maha":                dist = self._maha_distance
+            case "cos":                dist = self._cosine_distance
+            case "angular":            dist = self._angular_distance
+            case "angular_f":          dist = self._additive_angular_distance
+            case "cos_f":              dist = self._additive_cosine_distance
             case _:
                 raise ValueError(f"unknown d_fn {self.d_fn}")
         d_ap = dist(og_feat, ag_feat).diag()
@@ -149,9 +98,13 @@ class SentenceTriplet(nn.Module):
                 if not valid_hard.any():
                     return (og_feat * 0.0).sum() + (ag_feat * 0.0).sum()
                 if self.reducers.endswith("_sh"):
-                    loss_terms = d_ap[valid_hard] = min_d_an_hard[valid_hard]+self.margin
+                    loss_terms = d_ap[valid_hard] - min_d_an_hard[valid_hard] + self.margin
                 else:
                     loss_terms = F.relu(d_ap[valid_hard] - min_d_an_hard[valid_hard] + self.margin)
                 return self._apply_reducer(loss_terms, valid_hard.sum().float())
-        loss_terms = F.relu(d_ap[valid] - min_neg[valid] + self.margin)
+
+        if self.reducers.endswith("_sh"):
+            loss_terms = d_ap[valid] - min_neg[valid]+self.margin
+        else:
+            loss_terms = F.relu(d_ap[valid] - min_neg[valid] + self.margin)
         return self._apply_reducer(loss_terms, valid.sum().float())

@@ -83,7 +83,7 @@ def main(args=None):
                         reducer_names = [reducer_names]
                     beta_values = r.get("beta_values", [])
                     for name in reducer_names:
-                        if name in ["softmax", "adapt_softmax"]:
+                        if name in ["softmax", "adapt_softmax", "softmax_sh"]:
                             if not beta_values:
                                 all_reducer_beta_pairs.append((name, None))
                             else:
@@ -145,7 +145,7 @@ def main(args=None):
             assert 0.0 <= combo["margin"] <= 1.0, f"Expected margin between 0 and 1, got {combo['margin']}"
             assert isinstance(combo["fallback"], bool), \
                 f"Expected fallback to be a boolean, got {combo['fallback']}"
-            assert combo["reducer"] in ["mean", "sum", "softmax", "adapt_softmax"], \
+            assert combo["reducer"] in ["mean", "sum", "softmax", "adapt_softmax", "softmax_sh"], \
                 f"Expected reducer to be one of ['mean', 'sum', 'softmax', 'adapt_softmax'], got {combo['reducer']}"
             assert combo["distance_fn"] in ["angular", "cos", "angular_w", "cos_w", "maha", "angular_f", "cos_f", "angular_fw", "cos_fw"], \
                 f"Expected distance_fn to be either 'angular' or 'cos','chord','scaled_chord','maha' got {combo['distance_fn']}"
