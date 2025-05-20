@@ -157,7 +157,7 @@ def main(args=None):
         if combo['method'] in ("semi-hard", "SST"):
             combo['method_dir'] = (
                 f"{output_base}.{combo['method']}.{combo['data_main']}.{encoder_short_name}."
-                f"{combo['distance_fn']}"
+                f"{combo['distance_fn']}."
                 f"{combo['reducer']}"
             )
             os.makedirs(combo['method_dir'], exist_ok=True)

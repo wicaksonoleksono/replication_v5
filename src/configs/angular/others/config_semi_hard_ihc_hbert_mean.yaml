@@ -1,5 +1,5 @@
 data_path: "dataset/preproceessed"
-output_base: "log/outpu"
+output_base: "output/others"
 seed: !!int 0
 
 encoders:
@@ -11,15 +11,14 @@ lambda_weights:
 batch_size: !!int 8
 num_epochs: !!int 6
 data_mains:
-  - name: "sbic"
+  - name: "ihc"
     methods:
       - name: "semi-hard"
-        d_fn: ["angular", "cos"]
+        d_fn: ["angular"]
         fallback: [!!bool true]
         margins: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:
           - name: "mean"
-# Learning rates      : 2e-5
 # reducers            : softmax
 # lambda weights      : 0.25
 
