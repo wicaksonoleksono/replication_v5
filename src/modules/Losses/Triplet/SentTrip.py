@@ -13,7 +13,9 @@ class SentenceTriplet(nn.Module):
         self.margin, self.reducers = margin, reducers
         self.use_fallback, self.beta, self.d_fn = use_fallback, beta, d_fn
         self._smp_l = SmoothMaxPool_learnable(init_beta=self.beta)
-        self.margin_rad = torch.clamp(torch.acos(margin), -1.0 + self.eps, 1.0 - self.eps)
+        margin_t = torch.as_tensor(margin, dtype=torch.float32)
+        margin_safe = torch.clamp(margin_t, -1.0 + self.eps, 1.0 - self.eps)
+        self.margin_rad = torch.acos(margin_safe)
 
     def _cosine_sim(self, x, y):
         return torch.mm(x, y.T)
@@ -40,7 +42,7 @@ class SentenceTriplet(nn.Module):
         phi = (cos * cos_m - sin * sin_m).clamp(-1+self.eps, 1-self.eps)
         return torch.acos(phi)
 
-    def _softmax_pooling_reducer(self, loss_terms):
+    def _smoothmax_pooling_reducer(self, loss_terms):
         if loss_terms.numel() == 0:
             return torch.tensor(0.0, device=loss_terms.device, dtype=loss_terms.dtype)
         return (1.0 / self.beta) * torch.log(torch.mean(torch.exp(self.beta * loss_terms)))
