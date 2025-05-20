@@ -141,7 +141,8 @@ def main(args=None):
 
             assert isinstance(combo["fallback"], bool), \
                 f"Expected fallback to be a boolean, got {combo['fallback']}"
-            valid_reducers = ["mean", "sum", "softmax", "softmax_sh", "sm_learnable", "freedom_softmax"]
+            valid_reducers = ["mean", "sum", "softmax", "softmax_sh",
+                              "sm_learnable", "freedom_softmax", "freedom_softmax_sh"]
             r = combo["reducer"]
             b = combo["beta"]
             assert r in valid_reducers, (

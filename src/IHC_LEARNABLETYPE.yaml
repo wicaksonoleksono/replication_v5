@@ -17,4 +17,4 @@ data_mains:
         fallback: [!!bool true]
         margins: [!!float 0.3]
         reducers:
-          - name: "freedom_softmax"
+          - name: ["freedom_softmax", "freedom_softmax_sh"]

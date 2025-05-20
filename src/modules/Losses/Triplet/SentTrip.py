@@ -103,12 +103,12 @@ class SentenceTriplet(nn.Module):
                 if not valid_hard.any():
                     return (og_feat * 0.0).sum() + (ag_feat * 0.0).sum()
                 if self.reducers.endswith("_sh"):
-                    loss_terms = d_ap[valid_hard] - min_d_an_hard[valid_hard] + margin
+                    loss_terms = d_ap[valid_hard] - min_d_an_hard[valid_hard] + self.margin
                 else:
-                    loss_terms = F.relu(d_ap[valid_hard] - min_d_an_hard[valid_hard] + margin)
+                    loss_terms = F.relu(d_ap[valid_hard] - min_d_an_hard[valid_hard] + self.margin)
                 return self._apply_reducer(loss_terms, valid_hard.sum().float())
         if self.reducers.endswith("_sh"):
-            loss_terms = d_ap[valid] - min_neg[valid]+margin
+            loss_terms = d_ap[valid] - min_neg[valid]+self.margin
         else:
-            loss_terms = F.relu(d_ap[valid] - min_neg[valid] + margin)
+            loss_terms = F.relu(d_ap[valid] - min_neg[valid] + self.margin)
         return self._apply_reducer(loss_terms, valid.sum().float())
