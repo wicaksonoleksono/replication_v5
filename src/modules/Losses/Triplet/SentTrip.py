@@ -6,16 +6,15 @@ from functools import partial
 
 
 class SentenceTriplet(nn.Module):
-    def __init__(self, margin, reducers, use_fallback,
-                 beta, d_fn,):
+    def __init__(self, reducers, use_fallback,
+                 beta, d_fn, mine_margin, loss_margin):
         super().__init__()
         self.eps = 1e-6
-        self.margin, self.reducers = margin, reducers
+        self.loss_margin, self.reducers, self.mine_margin = loss_margin, reducers, mine_margin
         self.use_fallback, self.beta, self.d_fn = use_fallback, beta, d_fn
-        self._smp_l = SmoothMaxPool_learnable(init_beta=self.beta)
-        margin_t = torch.as_tensor(margin, dtype=torch.float32)
-        margin_safe = torch.clamp(margin_t, -1.0 + self.eps, 1.0 - self.eps)
-        self.margin_rad = torch.acos(margin_safe)
+
+        mt = torch.clamp(torch.as_tensor(loss_margin, dtype=torch.float32), -1.0 + self.eps, 1.0 - self.eps)
+        self.margin_rad = torch.acos(mt)
 
     def _cosine_sim(self, x, y):
         return torch.mm(x, y.T)
@@ -30,12 +29,12 @@ class SentenceTriplet(nn.Module):
         return torch.acos(safe_sim)
 
     def _additive_cosine_distance(self, x, y):
-        cos = (x @ y.T).clamp(-1+self.eps, 1-self.eps)
-        phi = (cos - self.margin).clamp(-1+self.eps, 1-self.eps)
+        cos = self._cosine_sim(x, y)
+        phi = (cos - self.loss_margin).clamp(-1+self.eps, 1-self.eps)
         return torch.acos(phi)
 
     def _additive_angular_distance(self, x, y):
-        cos = (x @ y.T).clamp(-1+self.eps, 1-self.eps)
+        cos = self._cosine_sim(x, y)
         sin = torch.sqrt(1 - cos.pow(2))
         cos_m, sin_m = torch.cos(self.margin_rad), torch.sin(self.margin_rad)
         phi = (cos * cos_m - sin * sin_m).clamp(-1+self.eps, 1-self.eps)
@@ -59,7 +58,6 @@ class SentenceTriplet(nn.Module):
             case "mean": reducers = self._mean_reducer(loss_terms, valid_count)
             case "softmax": reducers = self._smoothmax_pooling_reducer(loss_terms)
             case "softmax_sh": reducers = self._softplus_pool(loss_terms)
-            case "sm_learnable": reducers = self._smp_l(loss_terms)
             case _:
                 raise ValueError(f"Unknown reducer: {self.reducers}")
         return reducers
@@ -72,25 +70,17 @@ class SentenceTriplet(nn.Module):
             case "ang_f":                   d_p, d_n = self._additive_angular_distance, self._angular_distance
             case _:
                 raise ValueError(f"unknown d_fn {self.d_fn}")
-
         d_ap = d_p(og_feat, ag_feat).diag()
         d_an = d_n(og_feat, og_feat)
         device, B = og_feat.device, og_feat.size(0)
         labels = labels.view(-1)
         eye_mask = ~torch.eye(B, dtype=torch.bool, device=device)
         valid_neg_mask = (labels.unsqueeze(0) != labels.unsqueeze(1)) & eye_mask
-
-        if self.d_fn in ["ang_f", "angular"]:
-            margin = self.margin_rad
-        else:
-            margin = self.margin
-        # semi-hard negatives
         d_ap_exp = d_ap.unsqueeze(1)
-        semi_mask = (d_an > d_ap_exp) & (d_an < d_ap_exp + margin) & valid_neg_mask
+        semi_mask = (d_an > d_ap_exp) & (d_an < d_ap_exp + self.mine_margin) & valid_neg_mask
         d_an_semi = torch.where(semi_mask, d_an, torch.full_like(d_an, float('inf')))
         min_neg, _ = torch.min(d_an_semi, 1)
         valid = min_neg < float('inf')
-        # fallback
         if not valid.any():
             if not self.use_fallback:
                 return (og_feat * 0.0).sum() + (ag_feat * 0.0).sum()
@@ -100,34 +90,15 @@ class SentenceTriplet(nn.Module):
                 valid_hard = min_d_an_hard < float('inf')
                 if not valid_hard.any():
                     return (og_feat * 0.0).sum() + (ag_feat * 0.0).sum()
+                margin_loss = self.margin_rad if "ang" in self.d_fn else self.loss_margin
                 if self.reducers.endswith("_sh"):
-                    loss_terms = d_ap[valid_hard] - min_d_an_hard[valid_hard] + margin
+                    loss_terms = d_ap[valid_hard] - min_d_an_hard[valid_hard] + margin_loss
                 else:
-                    loss_terms = F.relu(d_ap[valid_hard] - min_d_an_hard[valid_hard] + margin)
+                    loss_terms = F.relu(d_ap[valid_hard] - min_d_an_hard[valid_hard] + margin_loss)
                 return self._apply_reducer(loss_terms, valid_hard.sum().float())
 
         if self.reducers.endswith("_sh"):
-            loss_terms = d_ap[valid] - min_neg[valid]+margin
+            loss_terms = d_ap[valid] - min_neg[valid]+self.loss_margin
         else:
-            loss_terms = F.relu(d_ap[valid] - min_neg[valid] + margin)
+            loss_terms = F.relu(d_ap[valid] - min_neg[valid] + self.loss_margin)
         return self._apply_reducer(loss_terms, valid.sum().float())
-
-
-class SmoothMaxPool_learnable(nn.Module):
-    def __init__(self, init_beta: float = 10.0, eps: float = 1e-6):
-        super().__init__()
-        init_beta_tensor = torch.tensor(init_beta, dtype=torch.float32)
-        self.log_beta = nn.Parameter(torch.log(init_beta_tensor))
-        self.eps = eps
-
-    @property
-    def beta(self):
-        return torch.exp(self.log_beta) + self.eps
-
-    def forward(self, loss_terms):
-        if loss_terms.numel() == 0:
-            return torch.tensor(0.0,
-                                device=loss_terms.device,
-                                dtype=loss_terms.dtype)
-        b = self.beta
-        return (1.0 / b) * torch.log(torch.mean(torch.exp(b * loss_terms)))

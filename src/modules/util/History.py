@@ -97,16 +97,12 @@ class HistoryTracker:
         })
 
     def best_f1_score(self, epoch, current_f1, train_f1, model, optimizer):
-        """Save best model and delete previous best if exists"""
         if current_f1 is None or not isinstance(current_f1, (int, float)):
             raise ValueError(f"Invalid F1 score: {current_f1}")
-        # Get current best with type safety
         current_best = self.history["best"].get("f1_macro", -1)
         if not isinstance(current_best, (int, float)):
             current_best = -1
-        # Comparison with safe values
-        if (current_f1 > current_best) and ((train_f1 - current_f1) < 12):
-            # Delete previous best model if exists
+        if (current_f1 > current_best) and ((train_f1 - current_f1) < 5):
             previous_best = self.history["best"].get("path")
             if previous_best and os.path.exists(previous_best):
                 try:
@@ -115,8 +111,6 @@ class HistoryTracker:
                         f"🗑️ Deleted previous best: {os.path.basename(previous_best)}")
                 except Exception as e:
                     print(f"⚠️ Failed to delete previous best: {e}")
-
-            # Save new best model
             best_path = os.path.join(
                 self.output_path, f"best_epoch_{epoch}.pth")
             torch.save({

@@ -57,18 +57,21 @@ def main(args=None):
                         # method-specific
                         "temperature": temp,
                         "am": None,
-                        "margin": None,
+                        "mine_margin": None,
+                        "loss_margin": None,
                         "fallback": None,
                         "reducer": None,
                         "beta": None,
-                        "distance_fn": None
+                        "distance_fn": None,
+
 
                     }
                     all_combinations.append(combo)
 
             elif method_name == "semi-hard" or "SST":
                 fallback_vals = method_dict["fallback"]
-                margins = method_dict["margins"]
+                loss_margins, mine_margins = method_dict["loss_margins"], method_dict["mine_margins"]
+
                 d_fns = method_dict["d_fn"]
                 reducers_list = method_dict["reducers"]
                 all_reducer_beta_pairs = []
@@ -91,10 +94,11 @@ def main(args=None):
                             all_reducer_beta_pairs.append((name, None))
                 print(all_reducer_beta_pairs)
                 all_combinations = []
-                for (enc, lr, marg, lam, fb, d_fn, (reducer_name, beta_val)) in product(
+                for (enc, lr, mm, lm, lam, fb, d_fn, (reducer_name, beta_val)) in product(
                     encoders,
                     learning_rates,
-                    margins,
+                    mine_margins,
+                    loss_margins,
                     lambda_weights,
                     fallback_vals,
                     d_fns,
@@ -111,7 +115,8 @@ def main(args=None):
                         "method_dir":   None,
                         # method-specific
                         "temperature":  None,
-                        "margin":       marg,
+                        "mine_margin":  mm,
+                        "loss_margin":  lm,
                         "fallback":     fb,
                         "reducer":      reducer_name,
                         "beta":         beta_val,
@@ -133,7 +138,8 @@ def main(args=None):
             f"Expected num_epochs to be in the range [0, 6], got {combo['num_epochs']}"
         # Check method-specific parameters
         if combo["method"] in ("semi-hard", "SST"):
-            assert 0.0 <= combo["margin"] <= 1.0, f"Expected margin between 0 and 1, got {combo['margin']}"
+            assert 0.0 <= combo["mine_margin"] <= 1.0, f"Expected margin between 0 and 1, got {combo['mine_margin']}"
+            assert 0.0 <= combo["loss_margin"] <= 1.0, f"Expected margin between 0 and 1, got {combo['loss_margin']}"
             assert isinstance(combo["fallback"], bool), \
                 f"Expected fallback to be a boolean, got {combo['fallback']}"
             valid_reducers = ["mean", "sum", "softmax", "softmax_sh", "sm_learnable"]
@@ -190,7 +196,7 @@ def main(args=None):
             f"num epoch={combo['num_epochs']} | seed={seed} | batch_size={combo['batch_size']}|"
             f"data_main={combo['data_main']} | method={combo['method']} | encoder={combo['encoder']} | "
             f"learning_rate={combo['learning_rate']} | lambda_weight={combo['lambda_weight']}\n"
-            f"temperature={combo['temperature']} | margin={combo['margin']} | fallback={combo['fallback']} | "
+            f"temperature={combo['temperature']} | mine_margin={combo['mine_margin']}|loss_margin={combo['loss_margin']} | fallback={combo['fallback']} | "
             f"reducer={combo['reducer']} | beta={combo['beta']} | dist_fn={combo['distance_fn']}\n"
         )
         pipeline(
@@ -207,7 +213,8 @@ def main(args=None):
             # triplet loss
             # if combo["method"] == "semi-hard" else None,
             d_fn=combo["distance_fn"],
-            margin=combo["margin"],
+            loss_margin=combo["loss_margin"],
+            mine_margin=combo["mine_margin"],
             beta=combo["beta"],  # if combo["method"] == "semi-hard" else None,
             # if combo["method"] == "semi-hard" else None,
             reducer=combo["reducer"],
