@@ -12,9 +12,10 @@ class SentenceTriplet(nn.Module):
         self.eps = 1e-6
         self.loss_margin, self.reducers, self.mine_margin = loss_margin, reducers, mine_margin
         self.use_fallback, self.beta, self.d_fn = use_fallback, beta, d_fn
-
-        mt = torch.clamp(torch.as_tensor(loss_margin, dtype=torch.float32), -1.0 + self.eps, 1.0 - self.eps)
-        self.margin_rad = torch.acos(mt)
+        lmr = torch.clamp(torch.as_tensor(loss_margin, dtype=torch.float32), -1.0 + self.eps, 1.0 - self.eps)
+        mmr = torch.clamp(torch.as_tensor(loss_margin, dtype=torch.float32), -1.0 + self.eps, 1.0 - self.eps)
+        self.loss_margin_rad = torch.acos(lmr)
+        self.mine_margin_rad = torch.acos(mmr)
 
     def _cosine_sim(self, x, y):
         return torch.mm(x, y.T)
@@ -36,7 +37,7 @@ class SentenceTriplet(nn.Module):
     def _additive_angular_distance(self, x, y):
         cos = self._cosine_sim(x, y)
         sin = torch.sqrt(1 - cos.pow(2))
-        cos_m, sin_m = torch.cos(self.margin_rad), torch.sin(self.margin_rad)
+        cos_m, sin_m = torch.cos(self.loss_margin_rad), torch.sin(self.loss_margin_rad)
         phi = (cos * cos_m - sin * sin_m).clamp(-1+self.eps, 1-self.eps)
         return torch.acos(phi)
 
@@ -70,6 +71,11 @@ class SentenceTriplet(nn.Module):
             case "ang_f":                   d_p, d_n = self._additive_angular_distance, self._angular_distance
             case _:
                 raise ValueError(f"unknown d_fn {self.d_fn}")
+        # shitty hyprparam
+        use_rad = self.d_fn != "cos"
+        margin_loss = self.margin_rad if use_rad else self.loss_margin
+        margin_mine = self.mine_margin_rad if use_rad else self.mine_margin
+        # ach
         d_ap = d_p(og_feat, ag_feat).diag()
         d_an = d_n(og_feat, og_feat)
         device, B = og_feat.device, og_feat.size(0)
@@ -77,7 +83,7 @@ class SentenceTriplet(nn.Module):
         eye_mask = ~torch.eye(B, dtype=torch.bool, device=device)
         valid_neg_mask = (labels.unsqueeze(0) != labels.unsqueeze(1)) & eye_mask
         d_ap_exp = d_ap.unsqueeze(1)
-        semi_mask = (d_an > d_ap_exp) & (d_an < d_ap_exp + self.mine_margin) & valid_neg_mask
+        semi_mask = (d_an > d_ap_exp) & (d_an < d_ap_exp + margin_mine) & valid_neg_mask
         d_an_semi = torch.where(semi_mask, d_an, torch.full_like(d_an, float('inf')))
         min_neg, _ = torch.min(d_an_semi, 1)
         valid = min_neg < float('inf')
@@ -90,13 +96,11 @@ class SentenceTriplet(nn.Module):
                 valid_hard = min_d_an_hard < float('inf')
                 if not valid_hard.any():
                     return (og_feat * 0.0).sum() + (ag_feat * 0.0).sum()
-                margin_loss = self.margin_rad if "ang" in self.d_fn else self.loss_margin
                 if self.reducers.endswith("_sh"):
                     loss_terms = d_ap[valid_hard] - min_d_an_hard[valid_hard] + margin_loss
                 else:
                     loss_terms = F.relu(d_ap[valid_hard] - min_d_an_hard[valid_hard] + margin_loss)
                 return self._apply_reducer(loss_terms, valid_hard.sum().float())
-
         if self.reducers.endswith("_sh"):
             loss_terms = d_ap[valid] - min_neg[valid]+self.loss_margin
         else:

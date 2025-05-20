@@ -102,10 +102,11 @@ def pipeline(
     elif method in ["semi-hard", "SST"]:
         if reducer in ["softmax", "adapt_softmax", "softmax_sh"]:
             output_path = (
-                f"{method_dir}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}_b{beta}_fb{fallback}")
+                f"{method_dir}/loss_marg:{loss_margin}_lr{learning_rate}_lam{lambda_weight}_mine_margin{mine_margin}_b{beta}_fb{fallback}")
         else:
             output_path = (
-                f"{method_dir}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}")
+                f"{method_dir}/loss_marg:{loss_margin}_lr{learning_rate}_lam{lambda_weight}_margin{mine_margin}")
+
     os.makedirs(output_path, exist_ok=True)
     model = prim_encoder_con(
         hidden_size=768,
@@ -121,7 +122,7 @@ def pipeline(
             mine_margin=mine_margin, loss_margin=loss_margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn)
     elif method == "SST":
         metric_fn = SST(
-            margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn)
+            margin=mine_margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn)
     num_training_steps = int(len(train_iter)*num_epochs)
     lr_scheduler = get_linear_schedule_with_warmup(
         optimizer,
