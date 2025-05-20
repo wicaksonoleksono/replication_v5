@@ -7,13 +7,15 @@ from functools import partial
 
 class SentenceTriplet(nn.Module):
     def __init__(self, reducers, use_fallback,
-                 beta, d_fn, margin):
+                 beta, d_fn, mine_margin, loss_margin):
         super().__init__()
         self.eps = 1e-6
-        self.margin, self.reducers = margin, reducers
+        self.loss_margin, self.reducers, self.mine_margin = loss_margin, reducers, mine_margin
         self.use_fallback, self.beta, self.d_fn = use_fallback, beta, d_fn
-        lmr = torch.clamp(torch.as_tensor(margin, dtype=torch.float32), -1.0 + self.eps, 1.0 - self.eps)
-        self.margin_rad = torch.acos(lmr)
+        lmr = torch.clamp(torch.as_tensor(loss_margin, dtype=torch.float32), -1.0 + self.eps, 1.0 - self.eps)
+        mmr = torch.clamp(torch.as_tensor(mine_margin, dtype=torch.float32), -1.0 + self.eps, 1.0 - self.eps)
+        self.loss_margin_rad = torch.acos(lmr)
+        self.mine_margin_rad = torch.acos(mmr)
 
     def _cosine_sim(self, x, y):
         return torch.mm(x, y.T)
@@ -29,13 +31,13 @@ class SentenceTriplet(nn.Module):
 
     def _additive_cosine_distance(self, x, y):
         cos = self._cosine_sim(x, y)
-        phi = (cos - self.margin).clamp(-1+self.eps, 1-self.eps)
+        phi = (cos - self.loss_margin).clamp(-1+self.eps, 1-self.eps)
         return torch.acos(phi)
 
     def _additive_angular_distance(self, x, y):
         cos = self._cosine_sim(x, y)
         sin = torch.sqrt(1 - cos.pow(2))
-        cos_m, sin_m = torch.cos(self.margin_rad), torch.sin(self.margin_rad)
+        cos_m, sin_m = torch.cos(self.loss_margin_rad), torch.sin(self.loss_margin_rad)
         phi = (cos * cos_m - sin * sin_m).clamp(-1+self.eps, 1-self.eps)
         return torch.acos(phi)
 
@@ -71,7 +73,8 @@ class SentenceTriplet(nn.Module):
                 raise ValueError(f"unknown d_fn {self.d_fn}")
         # shitty hyprparam
         use_rad = self.d_fn != "cos"
-        margin_mine = margin_loss = self.margin_rad if use_rad else self.margin
+        margin_loss = self.loss_margin_rad if use_rad else self.loss_margin
+        margin_mine = self.mine_margin_rad if use_rad else self.mine_margin
         # ach
         d_ap = d_p(og_feat, ag_feat).diag()
         d_an = d_n(og_feat, og_feat)
