@@ -102,7 +102,7 @@ class HistoryTracker:
         current_best = self.history["best"].get("f1_macro", -1)
         if not isinstance(current_best, (int, float)):
             current_best = -1
-        if (current_f1 > current_best) and ((train_f1 - current_f1) < 5):
+        if (current_f1 > current_best) and ((train_f1 - current_f1) < 9):
             previous_best = self.history["best"].get("path")
             if previous_best and os.path.exists(previous_best):
                 try:

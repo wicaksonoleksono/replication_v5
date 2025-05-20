@@ -36,27 +36,20 @@ class TrainingVisualizer:
     def plot_metrics(self, output_path):
         """Generate separate plots for each metric with specified configurations"""
         os.makedirs(output_path, exist_ok=True)
-
-        # Prepare epoch-level data
         train_metrics, valid_metrics = self._prepare_epoch_data()
-
-        # Generate plots for each metric
         for metric in self.metrics:
             plt.figure(figsize=(18, 12))
-
             if metric == 'loss':
                 self._plot_loss(plt, train_metrics, valid_metrics)
             else:
                 self._plot_standard_metric(
                     plt, metric, train_metrics, valid_metrics)
-
             plot_path = os.path.join(output_path, f'{metric}_plot.png')
             plt.savefig(plot_path, bbox_inches='tight', dpi=300)
             plt.close()
             print(f"📊 Saved {metric} plot to {plot_path}")
 
     def _prepare_epoch_data(self):
-        """Extract epoch-level metrics for both train and validation"""
         train_metrics = []
         valid_metrics = []
         epochs = sorted(
@@ -64,7 +57,6 @@ class TrainingVisualizer:
              for k in self.history['train'] if k.startswith('epoch_')],
             key=lambda x: x
         )
-
         for epoch in epochs:
             epoch_key = f'epoch_{epoch}'
 

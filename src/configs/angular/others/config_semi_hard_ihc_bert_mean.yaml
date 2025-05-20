@@ -16,7 +16,8 @@ data_mains:
       - name: "semi-hard"
         d_fn: ["angular"]
         fallback: [!!bool true]
-        margins: [!!float 0.3, !!float 0.4, !!float 0.45]
+        loss_margins: [!!float 0.5]
+        mine_margins: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:
           - name: "mean"
 # reducers            : softmax

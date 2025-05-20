@@ -73,7 +73,7 @@ class SentenceTriplet(nn.Module):
                 raise ValueError(f"unknown d_fn {self.d_fn}")
         # shitty hyprparam
         use_rad = self.d_fn != "cos"
-        margin_loss = self.margin_rad if use_rad else self.loss_margin
+        margin_loss = self.loss_margin_rad if use_rad else self.loss_margin
         margin_mine = self.mine_margin_rad if use_rad else self.mine_margin
         # ach
         d_ap = d_p(og_feat, ag_feat).diag()
