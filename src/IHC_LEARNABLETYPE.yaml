@@ -14,9 +14,8 @@ data_mains:
     methods:
       - name: "semi-hard"
         d_fn: ["cos_f"]
-        angular_margin: [!!float 0.4]
         fallback: [!!bool true]
         margins: [!!float 0.3]
         reducers:
-          - name: "sm_learnable"
+          - name: "softmax"
             beta: [!!float 10]

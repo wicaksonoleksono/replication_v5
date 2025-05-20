@@ -70,8 +70,6 @@ def main(args=None):
                 fallback_vals = method_dict["fallback"]
                 margins = method_dict["margins"]
                 d_fns = method_dict["d_fn"]
-                raw_am = method_dict.get("angular_margin", [])
-                am_values = raw_am if isinstance(raw_am, list) else [raw_am]
                 reducers_list = method_dict["reducers"]
                 all_reducer_beta_pairs = []
                 for r in reducers_list:
@@ -92,7 +90,6 @@ def main(args=None):
                         else:
                             all_reducer_beta_pairs.append((name, None))
                 print(all_reducer_beta_pairs)
-                suffixes = ("_f", "_fw")
                 all_combinations = []
                 for (enc, lr, marg, lam, fb, d_fn, (reducer_name, beta_val)) in product(
                     encoders,
@@ -103,30 +100,24 @@ def main(args=None):
                     d_fns,
                     all_reducer_beta_pairs
                 ):
-                    if any(d_fn.endswith(s) for s in suffixes):
-                        am_iter = am_values
-                    else:
-                        am_iter = [None]
-                    for am in am_iter:
-                        combo = {
-                            "data_main":    data_main_name,
-                            "method":       method_name,
-                            "encoder":      enc,
-                            "learning_rate": lr,
-                            "lambda_weight": lam,
-                            "batch_size":   batch_size,
-                            "num_epochs":   num_epochs,
-                            "method_dir":   None,
-                            # method-specific
-                            "temperature":  None,
-                            "am":           am,
-                            "margin":       marg,
-                            "fallback":     fb,
-                            "reducer":      reducer_name,
-                            "beta":         beta_val,
-                            "distance_fn":  d_fn
-                        }
-                        all_combinations.append(combo)
+                    combo = {
+                        "data_main":    data_main_name,
+                        "method":       method_name,
+                        "encoder":      enc,
+                        "learning_rate": lr,
+                        "lambda_weight": lam,
+                        "batch_size":   batch_size,
+                        "num_epochs":   num_epochs,
+                        "method_dir":   None,
+                        # method-specific
+                        "temperature":  None,
+                        "margin":       marg,
+                        "fallback":     fb,
+                        "reducer":      reducer_name,
+                        "beta":         beta_val,
+                        "distance_fn":  d_fn
+                    }
+                    all_combinations.append(combo)
     print(combo)
     for combo in all_combinations:
         encoder_short_name = "bert" if "bert-base-uncased" in combo["encoder"] else "hatebert"
@@ -167,11 +158,9 @@ def main(args=None):
             combo['method_dir'] = (
                 f"{output_base}.{combo['method']}.{combo['data_main']}.{encoder_short_name}."
                 f"{combo['distance_fn']}"
-                f"{'.a_marg' + str(combo['am']) if combo['distance_fn'].endswith(('_f','_fw')) else ''}."
                 f"{combo['reducer']}"
             )
             os.makedirs(combo['method_dir'], exist_ok=True)
-
         elif combo['method'] == "contrastive":
             combo['method_dir'] = (
                 f"{output_base}.{combo['method']}."
@@ -220,7 +209,6 @@ def main(args=None):
             d_fn=combo["distance_fn"],
             margin=combo["margin"],
             beta=combo["beta"],  # if combo["method"] == "semi-hard" else None,
-            am=combo['am'],
             # if combo["method"] == "semi-hard" else None,
             reducer=combo["reducer"],
             # if combo["method"] == "semi-hard" else None,
