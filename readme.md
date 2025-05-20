@@ -32,14 +32,14 @@ python main.py --config "./config_semi_hard_sbic.yaml"
 new combo copy paste
 
 ```
-python main.py --config "./configs/SBIC/config_semi_hard_sbic_bert_cos.yaml"
-python main.py --config "./configs/SBIC/config_semi_hard_sbic_hbert_ang.yaml"
-python main.py --config "./configs/SBIC/config_semi_hard_sbic_hbert_cos.yaml"
-python main.py --config "./configs/SBIC/config_semi_hard_sbic_bert_ang.yaml"
-python main.py --config "./configs/SBIC/others/config_semi_hard_sbic_bert_mean.yaml"
-python main.py --config "./configs/SBIC/others/config_semi_hard_sbic_hbert_mean.yaml"
-python main.py --config "./configs/additive_cos_sbic.yaml" v
-python main.py --config "./configs/additive_cos_Ihc.yaml"v
+python main.py --config "./configs/angular/SBIC/additive_angular_sbic.yaml"
+python main.py --config "./configs/angular/SBIC/config_semi_hard_sbic_hbert_ang.yaml"
+python main.py --config "./configs/angular/SBIC/config_semi_hard_sbic_bert_ang.yaml"
+python main.py --config "./configs/angular/SBIC/additive_cos_sbic.yaml"
+python main.py --config "./configs/angular/IHC/additive_angular_ihc.yaml"
+python main.py --config "./configs/angular/IHC/additive_cos_ihc.yaml"
+python main.py --config "./configs/angular/IHC/config_semi_hard_ihc_bert_ang.yaml"
+python main.py --config "./configs/angular/IHC/config_semi_hard_ihc_hbert_ang.yaml"
 
 ```
 

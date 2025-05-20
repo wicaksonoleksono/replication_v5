@@ -12,5 +12,10 @@ num_epochs: !!int 6
 data_mains:
   - name: "sbic"
     methods:
-      - name: "contrastive"
-        temperatures: [!!float 0.3]
+      - name: "semi-hard"
+        d_fn: ["cos_f"]
+        fallback: [!!bool true]
+        margins: [!!float 0.3, !!float 0.4, !!float 0.45]
+        reducers:
+          - name: "softmax"
+            beta: [!!int 5, !!int 10, !!int 15]

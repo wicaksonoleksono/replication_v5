@@ -1,6 +1,7 @@
 data_path: "dataset/preproceessed"
 output_base: "output"
 seed: !!int 0
+
 encoders:
   - "bert-base-uncased"
 learning_rates:
@@ -13,10 +14,21 @@ data_mains:
   - name: "ihc"
     methods:
       - name: "semi-hard"
-        d_fn: ["cos_f"]
-        angular_margin: [!!float 0.4]
+        d_fn: ["angular"]
         fallback: [!!bool true]
-        margins: [!!float 0.3]
+        margins: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:
           - name: "softmax"
-            beta_values: [!!int 5, !!int 15]
+            beta: [!!int 15, !!int 5, !!int 10]
+# reducers            : softmax
+# lambda weights      : 0.25
+
+# Fallback            : True
+
+# IHC   #
+# beta                : 15
+# Margin              : 0.3
+
+# SBIC  #
+# beta                : 5
+# Margin              : 0.45

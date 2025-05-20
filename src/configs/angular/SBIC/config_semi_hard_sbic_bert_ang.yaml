@@ -1,7 +1,6 @@
 data_path: "dataset/preproceessed"
 output_base: "output"
 seed: !!int 0
-
 encoders:
   - "bert-base-uncased"
 learning_rates:
@@ -11,7 +10,7 @@ lambda_weights:
 batch_size: !!int 8
 num_epochs: !!int 6
 data_mains:
-  - name: "ihc"
+  - name: "sbic"
     methods:
       - name: "semi-hard"
         d_fn: ["angular"]
@@ -19,7 +18,8 @@ data_mains:
         margins: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:
           - name: "softmax"
-            beta_values: [!!int 15, !!int 5, !!int 10]
+            beta: [!!int 5, !!int 10, !!int 15]
+# Learning rates      : 2e-5
 # reducers            : softmax
 # lambda weights      : 0.25
 

@@ -1,7 +1,6 @@
 data_path: "dataset/preproceessed"
-output_base: "log/outpu"
+output_base: "output"
 seed: !!int 0
-
 encoders:
   - "GroNLP/hateBERT"
 learning_rates:
@@ -19,7 +18,7 @@ data_mains:
         margins: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:
           - name: "softmax"
-            beta_values: [!!int 5, !!int 10, !!int 15]
+            beta: [!!int 5, !!int 10, !!int 15]
 # Learning rates      : 2e-5
 # reducers            : softmax
 # lambda weights      : 0.25
