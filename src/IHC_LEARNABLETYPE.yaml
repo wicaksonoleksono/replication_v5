@@ -15,7 +15,7 @@ data_mains:
       - name: "semi-hard"
         d_fn: ["angular"]
         fallback: [!!bool true]
-        margins: [!!float 0.3]
+        margins: [!!float 0.5]
         reducers:
           - name: "softmax"
-            beta: [!!float 10]
+            beta: [!!float 5]

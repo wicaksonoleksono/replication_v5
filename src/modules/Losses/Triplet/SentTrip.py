@@ -35,10 +35,9 @@ class SentenceTriplet(nn.Module):
         return torch.acos(phi)
 
     def _additive_angular_distance(self, x, y):
-        cos = (x@y.T).clamp(-1+self.eps, 1-self.eps)
-        sin = torch.sqrt(1-cos.pow(2))
-        cos_m = torch.cos(self.margin)
-        sin_m = torch.sin(self.margin)
+        cos = (x @ y.T).clamp(-1+self.eps, 1-self.eps)
+        sin = torch.sqrt(1 - cos.pow(2))
+        cos_m, sin_m = torch.cos(self.margin_rad), torch.sin(self.margin_rad)
         phi = (cos * cos_m - sin * sin_m).clamp(-1+self.eps, 1-self.eps)
         return torch.acos(phi)
 
@@ -69,8 +68,8 @@ class SentenceTriplet(nn.Module):
         match self.d_fn:
             case "cos":                     d_p, d_n = self._cosine_distance, self._cosine_distance
             case "angular":                 d_p, d_n = self._angular_distance, self._angular_distance
-            case "cos_f":               d_p, d_n = self._additive_cosine_distance, self._angular_distance
-            case "ang_f":           d_p, d_n = self._additive_angular_distance, self._angular_distance
+            case "cos_f":                   d_p, d_n = self._additive_cosine_distance, self._angular_distance
+            case "ang_f":                   d_p, d_n = self._additive_angular_distance, self._angular_distance
             case _:
                 raise ValueError(f"unknown d_fn {self.d_fn}")
 
@@ -80,7 +79,11 @@ class SentenceTriplet(nn.Module):
         labels = labels.view(-1)
         eye_mask = ~torch.eye(B, dtype=torch.bool, device=device)
         valid_neg_mask = (labels.unsqueeze(0) != labels.unsqueeze(1)) & eye_mask
-        margin = self.margin_rad if self.d_fn in ["angular", "ang_f", "cos_f"] else self.margin
+
+        if self.d_fn in ["ang_f", "angular"]:
+            margin = self.margin_rad
+        else:
+            margin = self.margin
         # semi-hard negatives
         d_ap_exp = d_ap.unsqueeze(1)
         semi_mask = (d_an > d_ap_exp) & (d_an < d_ap_exp + margin) & valid_neg_mask
