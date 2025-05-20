@@ -47,16 +47,25 @@ class SentenceTriplet(nn.Module):
     def _mean_reducer(self, loss, valid_count):
         return loss.sum() / (valid_count + 1e-7)
 
-    def _softplus_pool(self, loss_terms):
+    def _softplus_reducer(self, loss_terms):
         if loss_terms.numel() == 0:
             return torch.tensor(0.0, device=loss_terms.device, dtype=loss_terms.dtype)
         return (1.0/self.beta) * torch.log1p(torch.exp(self.beta * loss_terms).sum())
+
+    def _lse_reducer(loss_terms, dim=0):
+        if loss_terms.numel() == 0:
+            return loss_terms.new_tensor(0.0)
+        lse = torch.logsumexp(loss_terms, dim=dim)
+        # subtract log of number of elements along that dim
+        n = loss_terms.size(dim)
+        return lse - torch.log(torch.tensor(n, device=loss_terms.device, dtype=loss_terms.dtype))
 
     def _apply_reducer(self, loss_terms, valid_count):
         match self.reducers:
             case "mean": reducers = self._mean_reducer(loss_terms, valid_count)
             case "softmax": reducers = self._smoothmax_pooling_reducer(loss_terms)
-            case "softmax_sh": reducers = self._softplus_pool(loss_terms)
+            case "softmax_sh": reducers = self._softplus_reducer(loss_terms)
+            case "softmax_sh": reducers = self._lse_reducer(loss_terms)
             case _:
                 raise ValueError(f"Unknown reducer: {self.reducers}")
         return reducers
@@ -72,7 +81,6 @@ class SentenceTriplet(nn.Module):
         # shitty hyprparam
         use_rad = self.d_fn != "cos"
         margin_mine = margin_loss = self.margin_rad if use_rad else self.margin
-        # ach
         d_ap = d_p(og_feat, ag_feat).diag()
         d_an = d_n(og_feat, og_feat)
         device, B = og_feat.device, og_feat.size(0)

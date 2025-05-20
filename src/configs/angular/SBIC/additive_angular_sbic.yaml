@@ -15,8 +15,7 @@ data_mains:
       - name: "semi-hard"
         d_fn: ["cos_f"]
         fallback: [!!bool true]
-        loss_margins: [!!float 0.5]
-        mine_margins: [!!float 0.3, !!float 0.4, !!float 0.45]
+        margin: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:
           - name: "softmax"
             beta: [!!int 5, !!int 10, !!int 15]
