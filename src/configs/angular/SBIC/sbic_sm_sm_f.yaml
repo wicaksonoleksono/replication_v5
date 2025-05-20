@@ -13,7 +13,7 @@ data_mains:
   - name: "sbic"
     methods:
       - name: "semi-hard"
-        d_fn: ["cos", "angular"]
+        d_fn: ["ang_f", "cos_f"]
         fallback: [!!bool true]
         margin: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:
