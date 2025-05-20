@@ -37,33 +37,27 @@ def _aggregate_annotations(self, split):
     return pd.DataFrame(aggregated_data, columns=columns)
 
 
-def turn_implied_statements_to_explanations(nlp, df, split):
-    if df is None:
-        raise ValueError("Input dataframe cannot be None")
-
-    # work on a copy to avoid side-effects
-    out = df.copy()
-    out['selectedStereotype'] = pd.Series(dtype="object")
-
-    for idx, row in trange(out.iterrows(), total=len(out), desc=f"Processing {split} data"):
-        if row['offensiveLABEL'] != 'offensive':
+def turn_implied_statements_to_explanations(nlp, df):
+    df['selectedStereotype'] = pd.Series(dtype="object")
+    for idx in df.index:
+        if df.at[idx, 'offensiveLABEL'] != 'offensive':
             continue
-        if row['whoTarget'] != 1.0 or pd.isna(row['targetStereotype']):
+        if df.at[idx, 'whoTarget'] != 1.0 or pd.isna(df.at[idx, 'targetStereotype']):
             continue
-        minorities = row['targetMinority'].split(' [SEP] ')
-        inferences = row['targetStereotype'].split(' [SEP] ')
+
+        minorities = df.at[idx, 'targetMinority'].split(' [SEP] ')
+        inferences = df.at[idx, 'targetStereotype'].split(' [SEP] ')
         explanations = []
+
         for target_minority, inference in zip(minorities, inferences):
             doc = nlp(inference)
             if len(doc) > 0:
                 token = doc[0]
                 word, tag, pos = token.text, token.tag_, token.pos_
             else:
-                word, tag, pos = "", "", ""
+                word = tag = pos = ''
 
-            if word == 'claims' and tag not in ('VBD', 'VBZ'):
-                expl = f"this post {inference}"
-            elif tag in ('VBD', 'VBZ'):
+            if (word == 'claims' and tag not in ('VBD', 'VBZ')) or tag in ('VBD', 'VBZ'):
                 expl = f"this post {inference}"
             elif (tag == 'VBG' and word not in ('implying', 'calling')) or word == 'being':
                 expl = f"this post implies that {inference}"
@@ -88,9 +82,14 @@ def turn_implied_statements_to_explanations(nlp, df, split):
 
             explanations.append(expl)
 
-        out.at[idx, 'selectedStereotype'] = random.choice(explanations) if explanations else None
+        if explanations:
+            df.at[idx, 'selectedStereotype'] = (
+                random.choice(explanations)
+                if len(explanations) > 1
+                else explanations[0]
+            )
 
-    return out
+    return df
 
 
 def run(self):

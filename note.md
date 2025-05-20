@@ -189,16 +189,4 @@ Pak arief :
 ```
 
 
-post: a string containing the text of the post that was annotated
-targetMinority: a string indicating the demographic group targeted
-targetStereotype: a string containing the implied statement
-offensiveYN: a string indicating if the post could be offensive to anyone. This is a categorical variable with three possible answers, ‘1.0’ if yes, ‘0.5’ if maybe, ‘0.0’ if no.
-whoTarget: a string, ‘0.0’ if the target is a group, ‘1.0’ if the target is an individual, and blank if the post is not offensive
-
-["post",
- "offensiveYN",
- "whoTarget",
- "targetMinority",
- "targetStereotype"]
-
 ```

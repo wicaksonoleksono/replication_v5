@@ -172,13 +172,16 @@ def train(device,
     )
     avg_loss_valid, computed_valid_metrics = evaluate(
         device=device, epoch=epoch, data_iter=val_loader, model=model, ce_fn=ce_fn, tracker=tracker, optimizer=optimizer, f1_train=computed_train_metrics['f1_macro'], is_testing=False)
+
     print(f"Epoch {epoch} completed. \n"
           f"Training Loss: {avg_train_loss:.4f}, \n"
           f"Validation Loss: {avg_loss_valid:.4f}, \n"
           f"Training Accuracy: {computed_train_metrics['accuracy']:.2%}, \n"
           f"Validation Accuracy: {computed_valid_metrics['accuracy']:.2%}, \n"
           f"Training F1 Score: {computed_train_metrics['f1_macro']:.2%}, \n"
-          f"Validation F1 Score: {computed_valid_metrics['f1_macro']:.2%}\n")
+          f"Validation F1 Score: {computed_valid_metrics['f1_macro']:.2%}\n",
+          f"Current BETA VALUE: {metric_fn._smp_l.beta:.2f}, \n"
+          )
     tracker.save_model(model, optimizer, epoch, lr_scheduler)
     tracker.save()
     return computed_valid_metrics["f1_macro"], computed_train_metrics["f1_macro"]

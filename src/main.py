@@ -81,9 +81,9 @@ def main(args=None):
                     reducer_names = r["name"]
                     if isinstance(reducer_names, str):
                         reducer_names = [reducer_names]
-                    beta_values = r.get("beta_values", [])
+                    beta_values = r.get("beta", [])
                     for name in reducer_names:
-                        if name in ["softmax", "adapt_softmax", "softmax_sh"]:
+                        if name in ["softmax", "softmax_sh", "sm_learnable"]:
                             if not beta_values:
                                 all_reducer_beta_pairs.append((name, None))
                             else:
@@ -145,21 +145,24 @@ def main(args=None):
             assert 0.0 <= combo["margin"] <= 1.0, f"Expected margin between 0 and 1, got {combo['margin']}"
             assert isinstance(combo["fallback"], bool), \
                 f"Expected fallback to be a boolean, got {combo['fallback']}"
-            assert combo["reducer"] in ["mean", "sum", "softmax", "adapt_softmax", "softmax_sh"], \
-                f"Expected reducer to be one of ['mean', 'sum', 'softmax', 'adapt_softmax'], got {combo['reducer']}"
-            assert combo["distance_fn"] in ["angular", "cos", "angular_w", "cos_w", "maha", "angular_f", "cos_f", "angular_fw", "cos_fw"], \
-                f"Expected distance_fn to be either 'angular' or 'cos','chord','scaled_chord','maha' got {combo['distance_fn']}"
-            if combo["reducer"] in ["softmax", "softmax_sh", "mean", "sum"]:
-                assert 1 <= combo["beta"] <= 15, f"Expected beta to be in the range [5, 15], got {combo['beta']}"
+            valid_reducers = ["mean", "sum", "softmax", "softmax_sh", "sm_learnable"]
+            r = combo["reducer"]
+            b = combo["beta"]
+            assert r in valid_reducers, (
+                f"Expected reducer to be one of {valid_reducers}, got {r}"
+            )
+            if r in ["softmax", "softmax_sh", "sm_learnable"]:
+                assert b is not None, f"For reducer '{r}', beta must be set."
+                assert 1 <= b <= 15, f"Expected beta to be in the range [1, 15], got {b}"
             else:
-                assert combo["beta"] is None, \
-                    "For reducers other than 'softmax' or 'adapt_softmax', beta must be None."
+                assert b is None, f"For reducer '{r}', beta must be None."
+            assert combo["distance_fn"] in ["angular", "cos", "angular_w", "cos_w", "angular_f", "cos_f", "angular_fw", "cos_fw"], \
+                f"Expected distance_fn to be either 'angular' or 'cos','chord','scaled_chord','maha' got {combo['distance_fn']}"
         elif combo["method"] == "contrastive":
             assert combo["temperature"] == 0.3, \
                 f"Expected temperature to be 0.3 for contrastive method, got {combo['temperature']}"
         else:
             raise ValueError(f"Unsupported method: {combo['method']}")
-
         if combo['method'] in ("semi-hard", "SST"):
             combo['method_dir'] = (
                 f"{output_base}.{combo['method']}.{combo['data_main']}.{encoder_short_name}."

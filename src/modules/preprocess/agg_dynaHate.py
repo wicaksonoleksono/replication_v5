@@ -14,12 +14,10 @@ class aggregation_dynahate:
 
     def load_dataset(self):
         self.dataset = pd.read_csv(self.dataset_path, delimiter=',', header=0)
-        # Drop the first column (assuming it's an index column)
         self.dataset = self.dataset.drop(self.dataset.columns[0], axis=1)
         return self.dataset
 
     def split_dataset(self):
-
         if self.dataset is None:
             raise ValueError("Dataset not loaded. Please call load_dataset() before splitting.")
 
@@ -29,7 +27,6 @@ class aggregation_dynahate:
         return self.train, self.dev, self.test
 
     def save_splits(self, output_dir=None):
-
         if output_dir is None:
             output_dir = self.load_dir
         os.makedirs(output_dir, exist_ok=True)

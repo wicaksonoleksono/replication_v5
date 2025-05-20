@@ -2,7 +2,7 @@ data_path: "dataset/preproceessed"
 output_base: "output"
 seed: !!int 0
 encoders:
-  - "bert-base-uncased"
+  - "GroNLP/hateBERT"
 learning_rates:
   - !!float 2e-5
 lambda_weights:
@@ -10,12 +10,13 @@ lambda_weights:
 batch_size: !!int 8
 num_epochs: !!int 6
 data_mains:
-  - name: "ihc"
+  - name: "sbic"
     methods:
       - name: "semi-hard"
-        d_fn: ["cos"]
+        d_fn: ["cos_f"]
+        angular_margin: [!!float 0.4]
         fallback: [!!bool true]
-        margins: [!!float 0.3]
+        margins: [!!float 0.45]
         reducers:
-          - name: "softmax_sh"
-            beta_values: [!!int 15, !!int 5]
+          - name: "softmax"
+            beta: [!!int 5, !!int 10, !!int 15]

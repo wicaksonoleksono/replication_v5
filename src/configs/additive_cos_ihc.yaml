@@ -19,4 +19,4 @@ data_mains:
         margins: [!!float 0.3]
         reducers:
           - name: "softmax"
-            beta_values: [!!int 5, !!int 10, !!int 15]
+            beta_values: [!!int 5, !!int 15]

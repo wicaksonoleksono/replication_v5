@@ -13,9 +13,10 @@ data_mains:
   - name: "ihc"
     methods:
       - name: "semi-hard"
-        d_fn: ["cos"]
+        d_fn: ["cos_f"]
+        angular_margin: [!!float 0.4]
         fallback: [!!bool true]
-        margins: [!!float 0.3]
+        margins: [!!float 0.45]
         reducers:
-          - name: "softmax_sh"
-            beta_values: [!!int 15, !!int 5]
+          - name: "softmax"
+            beta: [!!int 5, !!int 10, !!int 15]
