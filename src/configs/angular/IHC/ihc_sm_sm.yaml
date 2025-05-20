@@ -13,8 +13,8 @@ data_mains:
   - name: "ihc"
     methods:
       - name: "semi-hard"
-        d_fn: ["angular"]
+        d_fn: ["ang_f", "cos_f", "cos", "angular"]
         fallback: [!!bool true]
-        margins: [!!float 0.3]
+        margin: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:
-          - name: "freedom_softmax"
+          - name: ["freedom_softmax_sh", "freedom_softmax"]

@@ -105,7 +105,7 @@ def pipeline(
                 f"{method_dir}/lr{learning_rate}_lam{lambda_weight}_margin{margin}_b{beta}_fb{fallback}")
         else:
             output_path = (
-                f"{method_dir}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}")
+                f"{method_dir}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}_fb{fallback}")
 
     os.makedirs(output_path, exist_ok=True)
     model = prim_encoder_con(

@@ -1,4 +1,3 @@
-import torch.nn as nn
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -39,33 +38,35 @@ class SentenceTriplet(nn.Module):
         phi = (cos * cos_m - sin * sin_m).clamp(-1+self.eps, 1-self.eps)
         return torch.acos(phi)
 
+    def _mean_reducer(self, loss, valid_count):
+        return loss.sum() / (valid_count + 1e-7)
+
     def _smoothmax_pooling_reducer(self, loss_terms):
         if loss_terms.numel() == 0:
             return torch.tensor(0.0, device=loss_terms.device, dtype=loss_terms.dtype)
         return (1.0 / self.beta) * torch.log(torch.mean(torch.exp(self.beta * loss_terms)))
 
-    def _mean_reducer(self, loss, valid_count):
-        return loss.sum() / (valid_count + 1e-7)
-
-    def _softplus_reducer(self, loss_terms):
+    def _sm_softmax_sh(self, loss_terms):
         if loss_terms.numel() == 0:
             return torch.tensor(0.0, device=loss_terms.device, dtype=loss_terms.dtype)
-        return (1.0/self.beta) * torch.log1p(torch.exp(self.beta * loss_terms).sum())
+        max_val = loss_terms.max(dim=0, keepdim=True).values
+        shifted = loss_terms - max_val
+        w = F.softmax(shifted, dim=0)
+        return (w * loss_terms).sum(dim=0)
 
-    def _lse_reducer(loss_terms, dim=0):
+    def _sm_softmax(self, loss_terms):
         if loss_terms.numel() == 0:
             return loss_terms.new_tensor(0.0)
-        lse = torch.logsumexp(loss_terms, dim=dim)
-        # subtract log of number of elements along that dim
-        n = loss_terms.size(dim)
-        return lse - torch.log(torch.tensor(n, device=loss_terms.device, dtype=loss_terms.dtype))
+        weights = F.softmax(loss_terms, dim=0)
+        return (weights * loss_terms).sum(dim=0)
 
     def _apply_reducer(self, loss_terms, valid_count):
         match self.reducers:
             case "mean": reducers = self._mean_reducer(loss_terms, valid_count)
             case "softmax": reducers = self._smoothmax_pooling_reducer(loss_terms)
-            case "softmax_sh": reducers = self._softplus_reducer(loss_terms)
-            case "softmax_sh": reducers = self._lse_reducer(loss_terms)
+            # no beta
+            case "freedom_softmax_sh": reducers = self._sm_softmax_sh(loss_terms)
+            case "freedom_softmax": reducers = self._sm_softmax(loss_terms)
             case _:
                 raise ValueError(f"Unknown reducer: {self.reducers}")
         return reducers
@@ -78,9 +79,9 @@ class SentenceTriplet(nn.Module):
             case "ang_f":                   d_p, d_n = self._additive_angular_distance, self._angular_distance
             case _:
                 raise ValueError(f"unknown d_fn {self.d_fn}")
-        # shitty hyprparam
         use_rad = self.d_fn != "cos"
-        margin_mine = margin_loss = self.margin_rad if use_rad else self.margin
+        margin = self.margin_rad if use_rad else self.margin
+
         d_ap = d_p(og_feat, ag_feat).diag()
         d_an = d_n(og_feat, og_feat)
         device, B = og_feat.device, og_feat.size(0)
@@ -88,7 +89,7 @@ class SentenceTriplet(nn.Module):
         eye_mask = ~torch.eye(B, dtype=torch.bool, device=device)
         valid_neg_mask = (labels.unsqueeze(0) != labels.unsqueeze(1)) & eye_mask
         d_ap_exp = d_ap.unsqueeze(1)
-        semi_mask = (d_an > d_ap_exp) & (d_an < d_ap_exp + margin_mine) & valid_neg_mask
+        semi_mask = (d_an > d_ap_exp) & (d_an < d_ap_exp + margin) & valid_neg_mask
         d_an_semi = torch.where(semi_mask, d_an, torch.full_like(d_an, float('inf')))
         min_neg, _ = torch.min(d_an_semi, 1)
         valid = min_neg < float('inf')
@@ -102,12 +103,12 @@ class SentenceTriplet(nn.Module):
                 if not valid_hard.any():
                     return (og_feat * 0.0).sum() + (ag_feat * 0.0).sum()
                 if self.reducers.endswith("_sh"):
-                    loss_terms = d_ap[valid_hard] - min_d_an_hard[valid_hard] + margin_loss
+                    loss_terms = d_ap[valid_hard] - min_d_an_hard[valid_hard] + margin
                 else:
-                    loss_terms = F.relu(d_ap[valid_hard] - min_d_an_hard[valid_hard] + margin_loss)
+                    loss_terms = F.relu(d_ap[valid_hard] - min_d_an_hard[valid_hard] + margin)
                 return self._apply_reducer(loss_terms, valid_hard.sum().float())
         if self.reducers.endswith("_sh"):
-            loss_terms = d_ap[valid] - min_neg[valid]+self.loss_margin
+            loss_terms = d_ap[valid] - min_neg[valid]+margin
         else:
-            loss_terms = F.relu(d_ap[valid] - min_neg[valid] + self.loss_margin)
+            loss_terms = F.relu(d_ap[valid] - min_neg[valid] + margin)
         return self._apply_reducer(loss_terms, valid.sum().float())
