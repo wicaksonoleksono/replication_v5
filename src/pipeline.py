@@ -69,7 +69,7 @@ def pipeline(
 
         # triplet loss
         margin: float,
-        # mine_margin: float,
+        margin_rad: float,
         d_fn: str,
         beta: int,
         reducer: str,
@@ -102,10 +102,10 @@ def pipeline(
     elif method in ["semi-hard", "SST"]:
         if reducer in ["softmax", "adapt_softmax", "softmax_sh"]:
             output_path = (
-                f"{method_dir}/lr{learning_rate}_lam{lambda_weight}_margin{margin}_b{beta}_fb{fallback}")
+                f"{method_dir}/lr{learning_rate}_lam{lambda_weight}_margin{margin}_radian{margin_rad}_b{beta}_fb{fallback}")
         else:
             output_path = (
-                f"{method_dir}/_lr{learning_rate}_lam{lambda_weight}_margin{margin}_fb{fallback}")
+                f"{method_dir}/lr{learning_rate}_lam{lambda_weight}_margin{margin}_radian{margin_rad}_fb{fallback}")
 
     os.makedirs(output_path, exist_ok=True)
     model = prim_encoder_con(
@@ -119,7 +119,7 @@ def pipeline(
         metric_fn = SupConLoss(temperature=temperature)
     elif method == "semi-hard":
         metric_fn = SentenceTriplet(
-            margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn)
+            margin=margin, reducers=reducer, margin_rad=margin_rad, use_fallback=fallback, beta=beta, d_fn=d_fn)
     elif method == "SST":
         metric_fn = SST(
             margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn)

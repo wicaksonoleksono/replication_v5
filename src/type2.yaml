@@ -13,9 +13,8 @@ data_mains:
   - name: "ihc"
     methods:
       - name: "semi-hard"
-        d_fn: ["angular"]
+        d_fn: ["cos_f", "angular_f"]
         fallback: [!!bool true]
-        margin_rads: [!!float 0.5] # based off the paper this is the Most OK
         margins: [!!float 0.3]
         reducers:
           - name: ["freedom_softmax", "freedom_softmax_sh"]

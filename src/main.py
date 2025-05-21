@@ -58,11 +58,12 @@ def main(args=None):
                         "temperature": temp,
                         "am": None,
                         "margin": None,
+                        "margin_rads": None,
+
                         "fallback": None,
                         "reducer": None,
                         "beta": None,
                         "distance_fn": None,
-
 
                     }
                     all_combinations.append(combo)
@@ -70,7 +71,7 @@ def main(args=None):
             elif method_name == "semi-hard" or "SST":
                 fallback_vals = method_dict["fallback"]
                 # loss_margins, mine_margins = method_dict["loss_margins"], method_dict["mine_margins"]
-                margins = method_dict["margins"]
+                margin_rads, margins = method_dict["margins"], method_dict["margin_rads"]
                 d_fns = method_dict["d_fn"]
                 reducers_list = method_dict["reducers"]
                 all_reducer_beta_pairs = []
@@ -93,10 +94,11 @@ def main(args=None):
                             all_reducer_beta_pairs.append((name, None))
                 print(all_reducer_beta_pairs)
                 all_combinations = []
-                for (enc, lr, m, lam, fb, d_fn, (reducer_name, beta_val)) in product(
+                for (enc, lr, m, mr, lam, fb, d_fn, (reducer_name, beta_val)) in product(
                     encoders,
                     learning_rates,
                     margins,
+                    margin_rads,
                     lambda_weights,
                     fallback_vals,
                     d_fns,
@@ -111,9 +113,9 @@ def main(args=None):
                         "batch_size":   batch_size,
                         "num_epochs":   num_epochs,
                         "method_dir":   None,
-                        # method-specific
                         "temperature":  None,
                         "margin":       m,
+                        "margin_rad":   mr,
                         "fallback":     fb,
                         "reducer":      reducer_name,
                         "beta":         beta_val,
@@ -135,10 +137,8 @@ def main(args=None):
             f"Expected num_epochs to be in the range [0, 6], got {combo['num_epochs']}"
         # Check method-specific parameters
         if combo["method"] in ("semi-hard", "SST"):
-            # assert 0.0 <= combo["mine_margin"] <= 1.0, f"Expected margin between 0 and 1, got {combo['mine_margin']}"
-            # assert 0.0 <= combo["loss_margin"] <= 1.0, f"Expected margin between 0 and 1, got {combo['loss_margin']}"
             assert 0.0 <= combo["margin"] <= 1.0, f"Expected margin between 0 and 1, got {combo['margin']}"
-
+            assert 0.0 <= combo["margin_rad"] <= 1.0, f"Expected margin between 0 and 1, got {combo['margin_rad']}"
             assert isinstance(combo["fallback"], bool), \
                 f"Expected fallback to be a boolean, got {combo['fallback']}"
             valid_reducers = ["mean", "sum", "softmax", "softmax_sh",
@@ -214,6 +214,7 @@ def main(args=None):
             # if combo["method"] == "semi-hard" else None,
             d_fn=combo["distance_fn"],
             margin=combo["margin"],
+            margin_rad=combo["margin_rad"],
             beta=combo["beta"],  # if combo["method"] == "semi-hard" else None,
             # if combo["method"] == "semi-hard" else None,
             reducer=combo["reducer"],
