@@ -15,7 +15,6 @@ data_mains:
       - name: "semi-hard"
         d_fn: ["angular"]
         fallback: [!!bool true]
-        margin_rads: [!!float 0.5] # based off the paper this is the Most OK
-        margins: [!!float 0.3]
+        margins: [!!float 0.5]
         reducers:
-          - name: ["freedom_softmax", "freedom_softmax_sh"]
+          - name: ["freedom_softmax_sh"]
