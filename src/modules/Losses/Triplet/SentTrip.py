@@ -76,7 +76,7 @@ class SentenceTriplet(nn.Module):
     def forward(self, og_feat, ag_feat, labels):
         match self.d_fn:
             case "cos":                     d_p, d_n = self._cosine_distance, self._cosine_distance
-            case "angular":                 d_p, d_n = self._angular_distance, self._angular_distance
+            case "ang":                 d_p, d_n = self._angular_distance, self._angular_distance
             case "cos_f":                   d_p, d_n = self._additive_cosine_distance, self._angular_distance
             case "ang_f":                   d_p, d_n = self._additive_angular_distance, self._angular_distance
             case _:

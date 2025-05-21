@@ -152,8 +152,8 @@ def main(args=None):
                 assert 1 <= b <= 15, f"Expected beta to be in the range [1, 15], got {b}"
             else:
                 assert b is None, f"For reducer '{r}', beta must be None."
-            assert combo["distance_fn"] in ["angular", "cos", "angular_w", "cos_w", "angular_f", "cos_f", "angular_fw", "cos_fw"], \
-                f"Expected distance_fn to be either 'angular' or 'cos','chord','scaled_chord','maha' got {combo['distance_fn']}"
+            assert combo["distance_fn"] in ["ang", "cos", "ang_w", "cos_w", "ang_f", "cos_f", "ang_fw", "cos_fw"], \
+                f"Expected distance_fn to be either 'ang' or 'cos','chord','scaled_chord','maha' got {combo['distance_fn']}"
         elif combo["method"] == "contrastive":
             assert combo["temperature"] == 0.3, \
                 f"Expected temperature to be 0.3 for contrastive method, got {combo['temperature']}"
