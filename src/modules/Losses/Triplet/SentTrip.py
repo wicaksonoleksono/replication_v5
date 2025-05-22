@@ -76,14 +76,19 @@ class SentenceTriplet(nn.Module):
     def forward(self, og_feat, ag_feat, labels):
         match self.d_fn:
             case "cos":                     d_p, d_n = self._cosine_distance, self._cosine_distance
-            case "ang":                 d_p, d_n = self._angular_distance, self._angular_distance
+            case "ang":                     d_p, d_n = self._angular_distance, self._angular_distance
             case "cos_f":                   d_p, d_n = self._additive_cosine_distance, self._angular_distance
             case "ang_f":                   d_p, d_n = self._additive_angular_distance, self._angular_distance
             case _:
                 raise ValueError(f"unknown d_fn {self.d_fn}")
         use_rad = self.d_fn != "cos"
-        margin = self.margin_rad if use_rad else self.margin
-
+        mine_m = self.margin_rad if use_rad else self.margin
+        if self.d_fn == "cos":
+            hinge_m = self.margin
+        elif self.d_fn == "ang":
+            hinge_m = self.margin_rad
+        else:
+            hinge_m = 0.0
         d_ap = d_p(og_feat, ag_feat).diag()
         d_an = d_n(og_feat, og_feat)
         device, B = og_feat.device, og_feat.size(0)
@@ -91,7 +96,7 @@ class SentenceTriplet(nn.Module):
         eye_mask = ~torch.eye(B, dtype=torch.bool, device=device)
         valid_neg_mask = (labels.unsqueeze(0) != labels.unsqueeze(1)) & eye_mask
         d_ap_exp = d_ap.unsqueeze(1)
-        semi_mask = (d_an > d_ap_exp) & (d_an < d_ap_exp + margin) & valid_neg_mask
+        semi_mask = (d_an > d_ap_exp) & (d_an < d_ap_exp + mine_m) & valid_neg_mask
         d_an_semi = torch.where(semi_mask, d_an, torch.full_like(d_an, float('inf')))
         min_neg, _ = torch.min(d_an_semi, 1)
         valid = min_neg < float('inf')
@@ -105,12 +110,12 @@ class SentenceTriplet(nn.Module):
                 if not valid_hard.any():
                     return (og_feat * 0.0).sum() + (ag_feat * 0.0).sum()
                 if self.reducers.endswith("_sh"):
-                    loss_terms = d_ap[valid_hard] - min_d_an_hard[valid_hard] + margin
+                    loss_terms = d_ap[valid_hard] - min_d_an_hard[valid_hard] + hinge_m
                 else:
-                    loss_terms = F.relu(d_ap[valid_hard] - min_d_an_hard[valid_hard] + margin)
+                    loss_terms = F.relu(d_ap[valid_hard] - min_d_an_hard[valid_hard] + hinge_m)
                 return self._apply_reducer(loss_terms, valid_hard.sum().float())
         if self.reducers.endswith("_sh"):
-            loss_terms = d_ap[valid] - min_neg[valid]+margin
+            loss_terms = d_ap[valid] - min_neg[valid]+hinge_m
         else:
-            loss_terms = F.relu(d_ap[valid] - min_neg[valid] + margin)
+            loss_terms = F.relu(d_ap[valid] - min_neg[valid] + hinge_m)
         return self._apply_reducer(loss_terms, valid.sum().float())
