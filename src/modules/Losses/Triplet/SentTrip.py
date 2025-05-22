@@ -54,7 +54,7 @@ class SentenceTriplet(nn.Module):
         shifted = loss_terms - min_val         # now shifted ≥ 0
         weights = F.softmax(shifted, dim=0)     # just softmax over shifted
         smooth = (weights * shifted).sum()      #
-        return smooth + min_val
+        return smooth
 
     def _sm_softmax(self, loss_terms):
         if loss_terms.numel() == 0:

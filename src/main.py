@@ -8,7 +8,7 @@ from pipeline import pipeline
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, required=True)
+    parser.add_argument("--config", type=str, nargs='+', required=True)
     return parser.parse_args(args)
 
 
