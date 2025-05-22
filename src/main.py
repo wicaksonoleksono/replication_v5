@@ -8,7 +8,13 @@ from pipeline import pipeline
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, nargs='+', required=True)
+    parser.add_argument(
+        "--config",
+        type=str,
+        nargs="+",
+        required=True,
+        help="One or more YAML config paths"
+    )
     return parser.parse_args(args)
 
 
@@ -17,10 +23,9 @@ def load_config(config_path):
         return yaml.safe_load(f)
 
 
-def main(args=None):
+def process(config_path):
     all_combinations = []
-    parsed_args = parse_args(args)
-    config = load_config(parsed_args.config)
+    config = load_config(config_path)
     # 1. Glob param .
     data_path = config.get("data_path")  # str
     output_base = config.get("output_base")  # str
@@ -229,6 +234,13 @@ def main(args=None):
     if progress_data["last_completed_index"] >= total_combos - 1:
         print("\nAll combinations have completed successfully!")
         reset_progress(progress_path)
+
+
+def main():
+    args = parse_args()
+    for cfg_path in args.config:
+        process(cfg_path)
+    print("\n🎉 All configurations complete.")
 
 
 if __name__ == "__main__":

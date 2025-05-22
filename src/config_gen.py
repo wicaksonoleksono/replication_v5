@@ -22,11 +22,7 @@ def discover_configs(base_dir):
 
 def main():
     s_list, other_list = discover_configs(BASE_DIR)
-
-    # 1) Create 12 empty buckets
     buckets = [[] for _ in range(PARALLEL_SLOTS)]
-
-    # 2) Round-robin assign all s_ files
     for i, cfg in enumerate(s_list):
         buckets[i % PARALLEL_SLOTS].append(cfg)
 
