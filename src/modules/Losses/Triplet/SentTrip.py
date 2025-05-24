@@ -11,9 +11,9 @@ class SentenceTriplet(nn.Module):
         self.eps = 1e-6
         self.margin, self.reducers = margin, reducers
         self.use_fallback, self.beta, self.d_fn = use_fallback, beta, d_fn
-        m_cos = torch.tensor(1.0 - margin, dtype=torch.float32)
-        m_cos = torch.clamp(m_cos, -1.0 + self.eps, 1.0 - self.eps)
-        self.margin_rad = torch.acos(m_cos)
+        # m_cos = torch.tensor(1.0 - margin, dtype=torch.float32)
+        # m_cos = torch.clamp(m_cos, -1.0 + self.eps, 1.0 - self.eps)
+        self.margin_rad = margin
 
     def _cosine_sim(self, x, y):
         return torch.mm(x, y.T)
@@ -51,9 +51,9 @@ class SentenceTriplet(nn.Module):
         if loss_terms.numel() == 0:
             return torch.tensor(0.0, device=loss_terms.device, dtype=loss_terms.dtype)
         min_val = loss_terms.min()
-        shifted = loss_terms - min_val         # now shifted ≥ 0
-        weights = F.softmax(shifted, dim=0)     # just softmax over shifted
-        smooth = (weights * shifted).sum()      #
+        shifted = loss_terms - min_val
+        weights = F.softmax(shifted, dim=0)
+        smooth = (weights * shifted).sum()
         return smooth
 
     def _sm_softmax(self, loss_terms):

@@ -4,23 +4,24 @@ import os
 from itertools import product
 from modules import update_progress, load_progress, reset_progress, set_seed
 from pipeline import pipeline
-
-
-def parse_args(args=None):
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--config",
-        type=str,
-        nargs="+",
-        required=True,
-        help="One or more YAML config paths"
-    )
-    return parser.parse_args(args)
+import math
 
 
 def load_config(config_path):
     with open(config_path, "r") as f:
         return yaml.safe_load(f)
+
+
+def parse_args(args=None):  # args=None allows it to pick up sys.argv by default from CLI
+    parser = argparse.ArgumentParser(description="Process configurations for model training.")
+    parser.add_argument(
+        "--config",
+        type=str,
+        nargs="+",  # Allows one or more config files
+        required=True,  # This is fine, as we'll ensure arguments are passed
+        help="One or more YAML config paths"
+    )
+    return parser.parse_args(args)  # Pass the list of args here
 
 
 def process(config_path):
@@ -29,7 +30,6 @@ def process(config_path):
     # 1. Glob param .
     data_path = config.get("data_path")  # str
     output_base = config.get("output_base")  # str
-
     encoders = config.get("encoders")  # str
     learning_rates = config.get("learning_rates")  # float64
     batch_size = config.get("batch_size")  # int
@@ -68,13 +68,55 @@ def process(config_path):
                         "beta": None,
                         "distance_fn": None,
 
+                        "cam_angular_margin_m": None,
+                        "cam_lambda_a":         None,
+                        "cam_lambda_r":         None,
+
 
                     }
                     all_combinations.append(combo)
-
+            elif method_name == "cam":
+                cam_angular_margins_m = method_dict.get(
+                    "cam_angular_margins_m", [1.57])  # Example default: pi/2 radians
+                cam_lambda_as = method_dict.get("cam_lambda_as", [1.0])           # Weight for attractor loss
+                cam_lambda_rs = method_dict.get("cam_lambda_rs", [1.0])           # Weight for repeller loss
+                print(
+                    f"⚙️ Configuring CAM method with angular_margins: {cam_angular_margins_m}, lambda_as: {cam_lambda_as}, lambda_rs: {cam_lambda_rs}")
+                all_combinations = []
+                for (enc, lr, ang_m, l_a, l_r, lam) in product(
+                    encoders,
+                    learning_rates,
+                    cam_angular_margins_m,
+                    cam_lambda_as,
+                    cam_lambda_rs,
+                    lambda_weights
+                ):
+                    combo = {
+                        "data_main":        data_main_name,
+                        "method":           method_name,
+                        "encoder":          enc,
+                        "learning_rate":    lr,
+                        "batch_size":       batch_size,    # Defined outside
+                        "num_epochs":       num_epochs,    # Defined outside
+                        "method_dir":       None,          # To be filled later
+                        # CAM-specific parameters for the CamLoss class
+                        "cam_angular_margin_m": ang_m,
+                        "cam_lambda_a":         l_a,
+                        "cam_lambda_r":         l_r,
+                        # Set other method-specific params (from triplet, etc.) to None or omit
+                        # if your downstream config processor expects them.
+                        "lambda_weight":    lam,  # CAM has its own lambda_a, lambda_r
+                        "temperature":      None,
+                        "margin":           None,  # Triplet margin, CAM uses cam_angular_margin_m
+                        "fallback":         None,
+                        "reducer":          None,
+                        "beta":             None,
+                        "distance_fn":      None  # CAM uses angular distance internally
+                    }
+                    all_combinations.append(combo)
+                print(f"Generated {len(all_combinations)} combinations for CAM.")
             elif method_name == "semi-hard" or "SST":
                 fallback_vals = method_dict["fallback"]
-                # loss_margins, mine_margins = method_dict["loss_margins"], method_dict["mine_margins"]
                 margins = method_dict["margins"]
                 d_fns = method_dict["d_fn"]
                 reducers_list = method_dict["reducers"]
@@ -122,7 +164,10 @@ def process(config_path):
                         "fallback":     fb,
                         "reducer":      reducer_name,
                         "beta":         beta_val,
-                        "distance_fn":  d_fn
+                        "distance_fn":  d_fn,
+                        "cam_angular_margin_m": None,
+                        "cam_lambda_a":         None,
+                        "cam_lambda_r":         None,
                     }
                     all_combinations.append(combo)
     print(combo)
@@ -142,7 +187,6 @@ def process(config_path):
         if combo["method"] in ("semi-hard", "SST"):
             # assert 0.0 <= combo["mine_margin"] <= 1.0, f"Expected margin between 0 and 1, got {combo['mine_margin']}"
             assert 0.0 <= combo["margin"] <= 1.0, f"Expected margin between 0 and 1, got {combo['margin']}"
-
             assert isinstance(combo["fallback"], bool), \
                 f"Expected fallback to be a boolean, got {combo['fallback']}"
             valid_reducers = ["mean", "sum", "softmax", "softmax_sh",
@@ -162,6 +206,63 @@ def process(config_path):
         elif combo["method"] == "contrastive":
             assert combo["temperature"] == 0.3, \
                 f"Expected temperature to be 0.3 for contrastive method, got {combo['temperature']}"
+        elif combo["method"] == "cam":
+            cam_ang_m = combo.get("cam_angular_margin_m")
+            assert cam_ang_m is not None, \
+                f"CAM Config Error: 'cam_angular_margin_m' cannot be None. Combo: {combo}"
+            assert isinstance(cam_ang_m, (int, float)), \
+                f"CAM Config Error: 'cam_angular_margin_m' must be a number. Got type {type(cam_ang_m)} with value '{cam_ang_m}'. Combo: {combo}"
+            # Angular margin should be positive and not excessively large (e.g., up to pi radians)
+            assert 0 < cam_ang_m <= math.pi, \
+                f"CAM Config Error: 'cam_angular_margin_m' ({cam_ang_m}) is out of the recommended range (0, pi approx {math.pi:.4f}]. Combo: {combo}"
+
+            # Assertions for 'cam_lambda_a' (Attractor loss weight)
+            cam_lambda_a_val = combo.get("cam_lambda_a")
+            assert cam_lambda_a_val is not None, \
+                f"CAM Config Error: 'cam_lambda_a' cannot be None. Combo: {combo}"
+            assert isinstance(cam_lambda_a_val, (int, float)), \
+                f"CAM Config Error: 'cam_lambda_a' must be a number. Got type {type(cam_lambda_a_val)} with value '{cam_lambda_a_val}'. Combo: {combo}"
+            # Lambda weights are typically non-negative. Allowing 0 means the component can be turned off.
+            assert 0.0 <= cam_lambda_a_val <= 10.0, \
+                f"CAM Config Error: 'cam_lambda_a' ({cam_lambda_a_val}) is out of the recommended range [0.0, 10.0]. Combo: {combo}"
+            # Assertions for 'cam_lambda_r' (Repeller loss weight)
+            cam_lambda_r_val = combo.get("cam_lambda_r")
+            assert cam_lambda_r_val is not None, \
+                f"CAM Config Error: 'cam_lambda_r' cannot be None. Combo: {combo}"
+            assert isinstance(cam_lambda_r_val, (int, float)), \
+                f"CAM Config Error: 'cam_lambda_r' must be a number. Got type {type(cam_lambda_r_val)} with value '{cam_lambda_r_val}'. Combo: {combo}"
+            assert 0.0 <= cam_lambda_r_val <= 10.0, \
+                f"CAM Config Error: 'cam_lambda_r' ({cam_lambda_r_val}) is out of the recommended range [0.0, 10.0]. Combo: {combo}"
+
+            # You might also check the global 'lambda_weight' for CAM if it's used for CCE+Metric combination
+            global_lambda_w = combo.get("lambda_weight")
+            assert global_lambda_w is not None, \
+                f"CAM Config Error: Global 'lambda_weight' (for CCE+Metric) cannot be None. Combo: {combo}"
+            assert isinstance(global_lambda_w, (int, float)), \
+                f"CAM Config Error: Global 'lambda_weight' must be a number. Got type {type(global_lambda_w)} with value '{global_lambda_w}'. Combo: {combo}"
+            assert 0.0 <= global_lambda_w <= 1.0, \
+                f"CAM Config Error: Global 'lambda_weight' ({global_lambda_w}) is out of range [0.0, 1.0]. Combo: {combo}"
+
+        elif combo["method"] in ["semi-hard", "SST"]:
+            # Your existing assertions for 'lambda_weight' for these methods
+            lambda_w = combo.get("lambda_weight")
+            assert lambda_w is not None, \
+                f"{combo['method']} Config Error: 'lambda_weight' cannot be None. Combo: {combo}"
+            assert isinstance(lambda_w, (int, float)), \
+                f"{combo['method']} Config Error: 'lambda_weight' must be a number. Got type {type(lambda_w)} with value '{lambda_w}'. Combo: {combo}"
+            # Adjust range as per its meaning (e.g., if it's CCE+Metric weight, 0-1 is common)
+            assert 0.0 <= lambda_w <= 1.0, \
+                f"{combo['method']} Config Error: 'lambda_weight' ({lambda_w}) for {combo['method']} out of range [0.0, 1.0]. Combo: {combo}"
+            # Add assertions for 'margin', 'reducer', 'beta', 'distance_fn', 'fallback' here
+            # Example for margin:
+            margin_val = combo.get("margin")
+            assert margin_val is not None, \
+                f"{combo['method']} Config Error: 'margin' cannot be None. Combo: {combo}"
+            assert isinstance(margin_val, (int, float)), \
+                f"{combo['method']} Config Error: 'margin' must be a number. Got {type(margin_val)}. Combo: {combo}"
+            assert 0.0 < margin_val < 2.0, \
+                f"{combo['method']} Config Error: 'margin' ({margin_val}) out of typical range (0.0, 2.0). Combo: {combo}"
+
         else:
             raise ValueError(f"Unsupported method: {combo['method']}")
         if combo['method'] in ("semi-hard", "SST"):
@@ -171,7 +272,7 @@ def process(config_path):
                 f"{combo['reducer']}"
             )
             os.makedirs(combo['method_dir'], exist_ok=True)
-        elif combo['method'] == "contrastive":
+        elif combo['method'] in ["contrastive", "cam"]:
             combo['method_dir'] = (
                 f"{output_base}.{combo['method']}."
                 f"{combo['data_main']}.{encoder_short_name}"
@@ -226,6 +327,9 @@ def process(config_path):
             # Contrastive
             # if combo["method"] == "contrastive" else None,
             temperature=combo["temperature"],
+            am=combo["cam_angular_margin_m"],
+            a=combo["cam_lambda_a"],
+            r=combo["cam_lambda_r"],
         )
 
         progress_data["last_completed_index"] = idx
@@ -236,12 +340,16 @@ def process(config_path):
         reset_progress(progress_path)
 
 
-def main():
-    args = parse_args()
+def main(args_list=None):
+    args = parse_args(args_list)  # If args_list is None, argparse uses sys.argv
+
     for cfg_path in args.config:
-        process(cfg_path)
-    print("\n🎉 All configurations complete.")
+        process(cfg_path)  # Call the refactored processing function
+
+    print("\n🎉 All configurations processed.")
 
 
+# --- This part is for when you run the script directly from command line ---
 if __name__ == "__main__":
+    # Example: python your_script_name.py --config config1.yaml config2.yaml
     main()

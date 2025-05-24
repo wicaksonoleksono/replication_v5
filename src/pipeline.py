@@ -7,6 +7,7 @@ from modules import (set_seed,
                      SupConLoss,
                      SentenceTriplet,
                      SST,
+                     CamLoss,
                      Metrics,
                      HistoryTracker,
                      TrainingVisualizer)
@@ -64,9 +65,7 @@ def pipeline(
         batch_size: int,
         num_epochs: int,
         lambda_weight: float,
-
         method: str,
-
         # triplet loss
         margin: float,
         # mine_margin: float,
@@ -76,6 +75,9 @@ def pipeline(
         fallback: bool,
         # Contrastive
         temperature: float,
+        am: float,
+        a: float,
+        r: float
 ):
     set_seed(seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -106,7 +108,9 @@ def pipeline(
         else:
             output_path = (
                 f"{method_dir}/lr{learning_rate}_lam{lambda_weight}_margin{margin}_fb{fallback}")
-
+    elif method == "cam":
+        output_path = (
+            f"{method_dir}/lr{learning_rate}_lam{lambda_weight}_a{a}_m{am}_r{r}")
     os.makedirs(output_path, exist_ok=True)
     model = prim_encoder_con(
         hidden_size=768,
@@ -117,6 +121,9 @@ def pipeline(
     ce_fn = nn.CrossEntropyLoss()
     if method == "contrastive":
         metric_fn = SupConLoss(temperature=temperature)
+    if method == "cam":
+        print(type(a), type(r), type(am))
+        metric_fn = CamLoss(lambda_a=a, lambda_r=r, angular_margin_m=am, embedding_size=768, num_classes=2).to(device)
     elif method == "semi-hard":
         metric_fn = SentenceTriplet(
             margin=margin, reducers=reducer, use_fallback=fallback, beta=beta, d_fn=d_fn)
@@ -129,7 +136,6 @@ def pipeline(
         num_warmup_steps=0,
         num_training_steps=num_training_steps
     )
-
     metrics = Metrics()
     tracker = HistoryTracker.load(output_path)
 

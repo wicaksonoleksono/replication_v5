@@ -131,7 +131,7 @@ def train(device,
         _, ag_feat = model.get_cls_features_ptrnsp(ag_text, ag_attn)
         pred = model(og_hidden)
         ce = ce_fn(pred, og_label)
-        if method == "semi-hard":
+        if method in ["semi-hard", "cam"]:
             metric_loss = metric_fn(og_feat, ag_feat, og_label)
         if method == "contrastive":
             sup_feat = torch.cat([og_feat, ag_feat])
@@ -139,7 +139,6 @@ def train(device,
         if method == "SST":
             metric_loss = metric_fn(og_feat, ag_feat)
         loss = lam * ce + (1 - lam) * metric_loss
-        # Update progress bar with current losses
         progress_bar.set_postfix({
             "mixed Loss": f"{loss.item():.4f}",
             "ce Loss": f"{ce.item():.4f}",
@@ -154,10 +153,8 @@ def train(device,
         tracker.update_loss(epoch, idx, loss.item(),
                             ce.item(), metric_loss.item())
         total_loss += ce.item()
-        # Collect predictions and labels for metrics
         batch_preds = torch.argmax(pred, dim=1).detach()
         metrics.update(batch_preds, og_label.detach())
-    # Compute epoch-level metrics
     computed_train_metrics = metrics.compute()
     avg_train_loss = total_loss / len(train_loader)
     tracker.update_metrics(
