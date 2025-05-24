@@ -2,7 +2,7 @@
 import os
 
 BASE_DIR = "./configs"
-PARALLEL_SLOTS = 10
+PARALLEL_SLOTS = 9
 
 
 def discover_configs(base_dir):
@@ -50,7 +50,6 @@ def main():
             other_files_current_idx += 1
         else:
             break  # No more other_list files to fill empty slots
-
     # Then, distribute any remaining "other" files round-robin across ALL slots
     if other_files_current_idx < len(other_list):
         for i in range(other_files_current_idx, len(other_list)):

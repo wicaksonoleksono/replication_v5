@@ -14,8 +14,10 @@ data_mains:
     methods:
       - name: "cam"
         cam_angular_margins_m:
-          - !!float 1.57
+          - !!float 0.8
         cam_lambda_as:
-          - !!float 0.75
+          - !!float 1.0
+          # - !!float 0.75
         cam_lambda_rs:
+          # - !!float 1.0
           - !!float 0.5
