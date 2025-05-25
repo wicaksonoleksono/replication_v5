@@ -13,9 +13,22 @@ data_mains:
   - name: "sbic"
     methods:
       - name: "semi-hard"
-        d_fn: ["cos_f"]
+        d_fn: ["ang"]
         fallback: [!!bool true]
         margins: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:
           - name: "softmax"
-            beta: [!!int 5, !!int 10, !!int 15]
+            beta: [!!int 5]
+# Learning rates      : 2e-5
+# reducers            : softmax
+# lambda weights      : 0.25
+
+# Fallback            : True
+
+# IHC   #
+# beta                : 15
+# margins              : 0.3
+
+# SBIC  #
+# beta                : 5
+# margins              : 0.45
