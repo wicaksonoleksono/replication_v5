@@ -16,8 +16,8 @@ data_mains:
         cam_angular_margins_m:
           - !!float 0.3
         cam_lambda_as:
-          - !!float 1.0
+          - !!float 0.3
           # - !!float 0.75
         cam_lambda_rs:
           # - !!float 1.0
-          - !!float 0.5
+          - !!float 1

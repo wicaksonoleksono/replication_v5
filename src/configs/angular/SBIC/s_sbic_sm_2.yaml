@@ -13,8 +13,8 @@ data_mains:
   - name: "sbic"
     methods:
       - name: "semi-hard"
-        d_fn: ["cos", "ang"]
+        d_fn: ["cos"]
         fallback: [!!bool true]
         margins: [!!float 0.3, !!float 0.4, !!float 0.45]
         reducers:
-          - name: ["freedom_softmax_sh"]
+          - name: ["freedom_softmax"]

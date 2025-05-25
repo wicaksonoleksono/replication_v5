@@ -7,23 +7,6 @@ from pipeline import pipeline
 import math
 
 
-def load_config(config_path):
-    with open(config_path, "r") as f:
-        return yaml.safe_load(f)
-
-
-def parse_args(args=None):  # args=None allows it to pick up sys.argv by default from CLI
-    parser = argparse.ArgumentParser(description="Process configurations for model training.")
-    parser.add_argument(
-        "--config",
-        type=str,
-        nargs="+",  # Allows one or more config files
-        required=True,  # This is fine, as we'll ensure arguments are passed
-        help="One or more YAML config paths"
-    )
-    return parser.parse_args(args)  # Pass the list of args here
-
-
 def process(config_path):
     all_combinations = []
     config = load_config(config_path)
@@ -338,6 +321,23 @@ def process(config_path):
     if progress_data["last_completed_index"] >= total_combos - 1:
         print("\nAll combinations have completed successfully!")
         reset_progress(progress_path)
+
+
+def load_config(config_path):
+    with open(config_path, "r") as f:
+        return yaml.safe_load(f)
+
+
+def parse_args(args=None):  # args=None allows it to pick up sys.argv by default from CLI
+    parser = argparse.ArgumentParser(description="Process configurations for model training.")
+    parser.add_argument(
+        "--config",
+        type=str,
+        nargs="+",  # Allows one or more config files
+        required=True,  # This is fine, as we'll ensure arguments are passed
+        help="One or more YAML config paths"
+    )
+    return parser.parse_args(args)  # Pass the list of args here
 
 
 def main(args_list=None):

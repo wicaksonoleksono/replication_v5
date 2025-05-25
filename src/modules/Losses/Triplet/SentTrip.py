@@ -11,9 +11,10 @@ class SentenceTriplet(nn.Module):
         self.eps = 1e-6
         self.margin, self.reducers = margin, reducers
         self.use_fallback, self.beta, self.d_fn = use_fallback, beta, d_fn
-        # m_cos = torch.tensor(1.0 - margin, dtype=torch.float32)
-        # m_cos = torch.clamp(m_cos, -1.0 + self.eps, 1.0 - self.eps)
-        self.margin_rad = margin
+        m_cos = torch.tensor(1.0 - margin, dtype=torch.float32)
+        m_cos = torch.clamp(m_cos, -1.0 + self.eps, 1.0 - self.eps)
+        self.margin_rad = m_cos.clone().detach().requires_grad_(True),
+        # self.margin_rad = torch.tensor(margin, dtype=torch.float32)
 
     def _cosine_sim(self, x, y):
         return torch.mm(x, y.T)
@@ -89,17 +90,27 @@ class SentenceTriplet(nn.Module):
             hinge_m = self.margin_rad
         else:
             hinge_m = 0.0
+
         d_ap = d_p(og_feat, ag_feat).diag()
         d_an = d_n(og_feat, og_feat)
+        if self.d_fn not in ["cos", "ang"]:
+            d_ap_no_marg = d_n(og_feat, ag_feat).diag()
+
         device, B = og_feat.device, og_feat.size(0)
         labels = labels.view(-1)
         eye_mask = ~torch.eye(B, dtype=torch.bool, device=device)
         valid_neg_mask = (labels.unsqueeze(0) != labels.unsqueeze(1)) & eye_mask
-        d_ap_exp = d_ap.unsqueeze(1)
-        semi_mask = (d_an > d_ap_exp) & (d_an < d_ap_exp + mine_m) & valid_neg_mask
+        if self.d_fn not in ["cos", "ang"]:
+            d_ap_lower = d_ap_no_marg.unsqueeze(1)
+            d_ap_upper = d_ap.unsqueeze(1)
+        else:
+            d_ap_lower = d_ap_upper = d_ap.unsqueeze(1)
+
+        semi_mask = (d_ap_upper + mine_m > d_an) & (d_an > d_ap_lower) & valid_neg_mask
         d_an_semi = torch.where(semi_mask, d_an, torch.full_like(d_an, float('inf')))
         min_neg, _ = torch.min(d_an_semi, 1)
         valid = min_neg < float('inf')
+
         if not valid.any():
             if not self.use_fallback:
                 return (og_feat * 0.0).sum() + (ag_feat * 0.0).sum()
