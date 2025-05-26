@@ -3,29 +3,29 @@
 --------------------
 # Commands grouped by parallel slot:
 # Slot 1
-python main.py --config "./configs/angular/SBIC/s_sbic_sm.yaml" "./configs/angular/SBIC/sbic_ang_smx_15.yaml" "./configs/angular/IHC/ihc_ang_smx_15.yaml"
+python main.py --config "./configs/angular/SBIC/s_sbic_hbert_mean.yaml" "./configs/angular/IHC/s_ihc_mean_f_2.yaml" "./configs/angular/SBIC/sbic_ang_smx_10.yaml" "./configs/angular/IHC/ihc_cos_smx_10.yaml"
 --------------------
 # Slot 2
-python main.py --config "./configs/angular/SBIC/s_sbic_sm_2.yaml" "./configs/angular/SBIC/sbic_ang_smx_5.yaml" "./configs/angular/IHC/ihc_ang_smx_5.yaml"
+python main.py --config "./configs/angular/SBIC/s_sbic_mean_f_1 .yaml" "./configs/angular/IHC/s_ihc_sm.yaml" "./configs/angular/SBIC/sbic_ang_smx_15.yaml" "./configs/angular/IHC/ihc_cos_smx_15.yaml"
 --------------------
 # Slot 3
-python main.py --config "./configs/angular/SBIC/s_sbic_sm_sm_f_1_2.yaml" "./configs/angular/SBIC/sbic_cos_smx_10.yaml" "./configs/angular/IHC/ihc_bert_ang_10.yaml"
+python main.py --config "./configs/angular/SBIC/s_sbic_mean_f_2.yaml" "./configs/angular/IHC/s_ihc_sm_2.yaml" "./configs/angular/SBIC/sbic_ang_smx_5.yaml" "./configs/angular/IHC/ihc_cos_smx_5.yaml"
 --------------------
 # Slot 4
-python main.py --config "./configs/angular/SBIC/s_sbic_sm_sm_f_2_2.yaml" "./configs/angular/SBIC/sbic_cos_smx_15.yaml" "./configs/angular/IHC/ihc_bert_ang_15.yaml"
+python main.py --config "./configs/angular/SBIC/s_sbic_sm.yaml" "./configs/angular/IHC/s_ihc_sm_sm_f_1_2.yaml" "./configs/angular/SBIC/sbic_cos_smx_10.yaml"
 --------------------
 # Slot 5
-python main.py --config "./configs/angular/IHC/s_ihc_sm.yaml" "./configs/angular/SBIC/sbic_cos_smx_5.yaml" "./configs/angular/IHC/ihc_bert_ang_5.yaml"
+python main.py --config "./configs/angular/SBIC/s_sbic_sm_2.yaml" "./configs/angular/IHC/s_ihc_sm_sm_f_2 _2.yaml" "./configs/angular/SBIC/sbic_cos_smx_15.yaml"
 --------------------
 # Slot 6
-python main.py --config "./configs/angular/IHC/s_ihc_sm_2.yaml" "./configs/angular/SBIC/sbic_hbert_ang_10.yaml" "./configs/angular/IHC/ihc_cos_smx_10.yaml"
+python main.py --config "./configs/angular/SBIC/s_sbic_sm_sm_f_1_2.yaml" "./configs/angular/SBIC/sbic_cos_smx_5.yaml"
 --------------------
 # Slot 7
-python main.py --config "./configs/angular/IHC/s_ihc_sm_sm_f_1_2.yaml" "./configs/angular/SBIC/sbic_hbert_ang_15.yaml" "./configs/angular/IHC/ihc_cos_smx_15.yaml"
+python main.py --config "./configs/angular/SBIC/s_sbic_sm_sm_f_2_2.yaml" "./configs/angular/IHC/ihc_ang_smx_10.yaml"
 --------------------
 # Slot 8
-python main.py --config "./configs/angular/IHC/s_ihc_sm_sm_f_2 _2.yaml" "./configs/angular/SBIC/sbic_hbert_ang_5.yaml" "./configs/angular/IHC/ihc_cos_smx_5.yaml"
+python main.py --config "./configs/angular/IHC/s_ihc_bert_mean.yaml" "./configs/angular/IHC/ihc_ang_smx_15.yaml"
 --------------------
 # Slot 9
-python main.py --config "./configs/angular/SBIC/sbic_ang_smx_10.yaml" "./configs/angular/IHC/ihc_ang_smx_10.yaml"
+python main.py --config "./configs/angular/IHC/s_ihc_mean_f_1 .yaml" "./configs/angular/IHC/ihc_ang_smx_5.yaml"
 --------------------
