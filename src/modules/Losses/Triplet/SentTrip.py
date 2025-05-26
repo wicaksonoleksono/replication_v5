@@ -13,8 +13,8 @@ class SentenceTriplet(nn.Module):
         self.use_fallback, self.beta, self.d_fn = use_fallback, beta, d_fn
         m_cos = torch.tensor(1.0 - margin, dtype=torch.float32)
         m_cos = torch.clamp(m_cos, -1.0 + self.eps, 1.0 - self.eps)
-        self.margin_rad = m_cos.clone().detach().requires_grad_(True),
-        # self.margin_rad = torch.tensor(margin, dtype=torch.float32)
+        # self.margin_rad = m_cos.clone().detach().requires_grad_(True),
+        self.margin_rad = torch.tensor(margin, dtype=torch.float32)
 
     def _cosine_sim(self, x, y):
         return torch.mm(x, y.T)
