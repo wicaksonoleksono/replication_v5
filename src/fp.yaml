@@ -12,5 +12,9 @@ num_epochs: !!int 6
 data_mains:
   - name: "ihc"
     methods:
-      - name: "contrastive"
-        temperatures: [!!float 0.3]
+      - name: "semi-hard"
+        d_fn: ["ang"]
+        fallback: [!!bool true]
+        margins: [!!float 0.2]
+        reducers:
+          - name: ["mean"]

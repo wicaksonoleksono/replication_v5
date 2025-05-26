@@ -1,0 +1,28 @@
+# Using BASE_DIR: configs/vanila
+# Using PARALLEL_SLOTS: 9
+--------------------
+# Commands grouped by parallel slot:
+# Slot 1
+python main.py --config "configs/vanila/10.yaml"
+--------------------
+# Slot 2
+python main.py --config "configs/vanila/15.yaml"
+--------------------
+# Slot 3
+python main.py --config "configs/vanila/5.yaml"
+--------------------
+# Slot 4
+python main.py --config "configs/vanila/mean.yaml"
+--------------------
+# Slot 5
+python main.py --config "configs/vanila/s10.yaml"
+--------------------
+# Slot 6
+python main.py --config "configs/vanila/s15.yaml"
+--------------------
+# Slot 7
+python main.py --config "configs/vanila/s5.yaml"
+--------------------
+# Slot 8
+python main.py --config "configs/vanila/smean.yaml"
+--------------------
