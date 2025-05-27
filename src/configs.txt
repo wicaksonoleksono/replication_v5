@@ -1,31 +1,31 @@
-# Using BASE_DIR: ./configs
+# Using BASE_DIR: config
 # Using PARALLEL_SLOTS: 9
 --------------------
 # Commands grouped by parallel slot:
 # Slot 1
-python main.py --config "./configs/angular/SBIC/s_sbic_hbert_mean.yaml" "./configs/angular/IHC/s_ihc_mean_f_2.yaml" "./configs/angular/SBIC/sbic_ang_smx_10.yaml" "./configs/angular/IHC/ihc_cos_smx_10.yaml"
+python main.py --config "config/ang/IHC/s_mean.yaml" "config/cos_f/IHC/s_mean.yaml" "config/ang/SBIC/mean.yaml" "config/cos/SBIC/smoothmax.yaml"
 --------------------
 # Slot 2
-python main.py --config "./configs/angular/SBIC/s_sbic_mean_f_1 .yaml" "./configs/angular/IHC/s_ihc_sm.yaml" "./configs/angular/SBIC/sbic_ang_smx_15.yaml" "./configs/angular/IHC/ihc_cos_smx_15.yaml"
+python main.py --config "config/ang/IHC/s_smoothmax.yaml" "config/cos_f/IHC/s_smoothmax.yaml" "config/ang/SBIC/smoothmax.yaml" "config/cos/SBIC/softmax.yaml"
 --------------------
 # Slot 3
-python main.py --config "./configs/angular/SBIC/s_sbic_mean_f_2.yaml" "./configs/angular/IHC/s_ihc_sm_2.yaml" "./configs/angular/SBIC/sbic_ang_smx_5.yaml" "./configs/angular/IHC/ihc_cos_smx_5.yaml"
+python main.py --config "config/ang/IHC/s_softmax.yaml" "config/cos_f/IHC/s_softmax.yaml" "config/ang/SBIC/softmax.yaml" "config/cos_f/SBIC/mean.yaml"
 --------------------
 # Slot 4
-python main.py --config "./configs/angular/SBIC/s_sbic_sm.yaml" "./configs/angular/IHC/s_ihc_sm_sm_f_1_2.yaml" "./configs/angular/SBIC/sbic_cos_smx_10.yaml"
+python main.py --config "config/ang_f/IHC/s_mean.yaml" "config/contrastive/cont_1.yaml" "config/cos_f/SBIC/smoothmax.yaml"
 --------------------
 # Slot 5
-python main.py --config "./configs/angular/SBIC/s_sbic_sm_2.yaml" "./configs/angular/IHC/s_ihc_sm_sm_f_2 _2.yaml" "./configs/angular/SBIC/sbic_cos_smx_15.yaml"
+python main.py --config "config/ang_f/IHC/s_smoothmax.yaml" "config/contrastive/cont_2.yaml" "config/cos_f/SBIC/softmax.yaml"
 --------------------
 # Slot 6
-python main.py --config "./configs/angular/SBIC/s_sbic_sm_sm_f_1_2.yaml" "./configs/angular/SBIC/sbic_cos_smx_5.yaml"
+python main.py --config "config/ang_f/IHC/s_softmax.yaml" "config/ang_f/SBIC/mean.yaml"
 --------------------
 # Slot 7
-python main.py --config "./configs/angular/SBIC/s_sbic_sm_sm_f_2_2.yaml" "./configs/angular/IHC/ihc_ang_smx_10.yaml"
+python main.py --config "config/cos/IHC/s_mean.yaml" "config/ang_f/SBIC/smoothmax.yaml"
 --------------------
 # Slot 8
-python main.py --config "./configs/angular/IHC/s_ihc_bert_mean.yaml" "./configs/angular/IHC/ihc_ang_smx_15.yaml"
+python main.py --config "config/cos/IHC/s_smoothmax.yaml" "config/ang_f/SBIC/softmax.yaml"
 --------------------
 # Slot 9
-python main.py --config "./configs/angular/IHC/s_ihc_mean_f_1 .yaml" "./configs/angular/IHC/ihc_ang_smx_5.yaml"
+python main.py --config "config/cos/IHC/s_softmax.yaml" "config/cos/SBIC/mean.yaml"
 --------------------
