@@ -6,6 +6,8 @@ from modules import update_progress, load_progress, reset_progress, set_seed
 from pipeline import pipeline
 import math
 
+set_seed(0)
+
 
 def process(config_path):
     all_combinations = []
