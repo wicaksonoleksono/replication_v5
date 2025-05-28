@@ -11,8 +11,11 @@ or
 ```
 
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-down
+
+pip install nlpaug tqdm PyYAML spacy nltk  numpy matplotlib seaborn scikit-learn scipy jupyterlab pandas
 pip install requirements.txt
+
+
 python -m spacy download en_core_web_sm
 python -c "import nltk; nltk.download('wordnet'); nltk.download('averaged_perceptron_tagger');nltk.download('averaged_perceptron_tagger_eng')"
 ```
