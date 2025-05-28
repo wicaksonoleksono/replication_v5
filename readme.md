@@ -10,8 +10,7 @@ or
 
 ```
 
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-
+pip install torch==2.3.0 torchvision==0.18.0 torchaudio==2.3.0 --index-url https://download.pytorch.org/whl/cu118
 pip install nlpaug tqdm PyYAML spacy nltk  numpy matplotlib seaborn scikit-learn scipy jupyterlab pandas
 pip install requirements.txt
 ya
