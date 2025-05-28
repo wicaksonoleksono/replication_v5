@@ -9,6 +9,7 @@ import nlpaug.augmenter.word as naw
 
 np.random.seed(0)
 random.seed(0)
+# credits: https://github.com/allenai/feb,https: // github.com/youngwook06/ImpCon/blob/main/prepare_sbic.py
 
 
 class aggregation_sbic:
@@ -42,7 +43,7 @@ class aggregation_sbic:
 
             targetMinority_label = None
             targetStereotype_label = None
-
+            # more robust logic and hanling NaN
             if whoTarget_label == 1.0:
                 minorities = post_rows["targetMinority"]
                 stereotypes = post_rows["targetStereotype"]
@@ -58,7 +59,7 @@ class aggregation_sbic:
                     targetStereotype_label = ' [SEP] '.join(targetStereotype_labels)
                     aggregated_data.append([post, offensiveYN_label, whoTarget_label,
                                             targetMinority_label, targetStereotype_label])
-                else:  # Training split
+                else:
                     temp_aggregated_data = []
                     last_m, last_s = None, None  # To store last m,s for the edge case
                     for m, s in zip(minorities, stereotypes):
@@ -73,7 +74,7 @@ class aggregation_sbic:
                         aggregated_data.append([post, offensiveYN_label, whoTarget_label,
                                                 str(last_m) if not pd.isna(last_m) else None,
                                                 str(last_s) if not pd.isna(last_s) else None])
-            else:  # Not targeting a group
+            else:
                 aggregated_data.append([post, offensiveYN_label, whoTarget_label,
                                         targetMinority_label, targetStereotype_label])
 
@@ -81,15 +82,29 @@ class aggregation_sbic:
         return df_new
 
     def _turn_implied_statements_to_explanations(self, split, df):
+        '''
+        This function implements a set of rules to transform annotations of which identity-based group is targeted and what stereotypes of this group are referenced or implied into a single, coherent sentence (explanation).
+        For example:
+        `targetMinority` == "women"
+        `targetStereotype` == "can't drive"
+        return: "this posts implies that women can't drive."
+
+        For attacks on individuals, it will return "this post is a personal attack".
+
+        For posts that are not offensive, it will return "this post does not imply anything offensive"
+        '''
         if df is None:
-            raise NotImplementedError  # Matches Code 2
+            raise NotImplementedError
+
         df['selectedStereotype'] = pd.Series(dtype="object")
+
         group_attack_no_implied_statement = 0
         personal_attack = 0
         not_offensive = 0
         group_offensive = 0
         offensive_na_whotarget = 0
-        for i in trange(len(df), desc=f"Transforming implied statements for {split} data"):
+
+        for i in trange(len(df["targetStereotype"])):
             offensive_label = df.loc[i, "offensiveLABEL"]
             if offensive_label == 'offensive' and (pd.isna(df.loc[i, "whoTarget"]) or df.loc[i, "whoTarget"] == ''):
                 offensive_na_whotarget += 1
@@ -98,40 +113,25 @@ class aggregation_sbic:
                 if pd.isna(df.loc[i, "targetStereotype"]) or df.loc[i, "targetStereotype"] == '':
                     group_attack_no_implied_statement += 1
                     continue
-                current_target_stereotype = df.loc[i, "targetStereotype"]
-                current_target_minority = df.loc[i, "targetMinority"]
-                inferences = str(current_target_stereotype).split(
-                    ' [SEP] ') if pd.notna(current_target_stereotype) else []
-                target_minorities = str(current_target_minority).split(
-                    ' [SEP] ') if pd.notna(current_target_minority) else []
-                inferences = [inf for inf in inferences if inf]
-                target_minorities = [tm for tm in target_minorities if tm]
+                inferences = df.loc[i, "targetStereotype"].split(' [SEP] ')
+                target_minorities = df.loc[i, "targetMinority"].split(' [SEP] ')
+
                 new_inferences = []
-
-                for idx, inference in enumerate(inferences):
-                    target_minority = target_minorities[idx] if idx < len(
-                        target_minorities) else "this group"  # Default if mismatch
-
-                    if not inference.strip():  # Skip empty inferences
-                        continue
-
-                    doc = self.nlp(inference)  # Use self.nlp
-                    inference_annotations = [{'token': token.text, 'pos': token.pos_, 'tag': token.tag_}
-                                             for token in doc]
-
-                    if not inference_annotations:  # Handle empty inference after NLP
-                        pass
-
+                for target_minority, inference in zip(target_minorities, inferences):
+                    inference_annotations = [{'token': token.text, 'pos': token.pos_,
+                                              'tag': token.tag_} for token in self.nlp(inference)]
                     first_word = inference_annotations[0]
                     changed = False
 
                     if first_word['token'] == 'claims' and first_word['tag'] not in ['VBD', 'VBZ']:
                         new_inferences.append(f'this post {inference}')
                         changed = True
+                    # verb, 3rd person singular present or simple past tense (e.g, said, calls, makes, uses, implies, marginalized, advocates, encourages, trivializes, refers) #ywywyw TODO is 가 들어가는 경우에 이상한 것 같은데 check
                     if first_word['tag'] in ['VBD', 'VBZ']:
                         new_inferences.append(f'this post {inference}')
                         changed = True
 
+                    # gerund or present participle and "being" [infinitive (e.g, using, lying, having, disrespecting, being; BUT NOT implying or calling)]
                     if (first_word['tag'] == 'VBG' and first_word['token'] not in ['implying', 'calling']) or first_word['token'] == 'being':
                         new_inferences.append(f'this post implies that {inference}')
                         changed = True
@@ -144,15 +144,16 @@ class aggregation_sbic:
                         new_inferences.append(f'this post implies that {target_minority} {inference}')
                         changed = True
 
+                    # verb, modal verb or base form
                     if first_word['tag'] in ['MD', 'VB'] or (first_word['pos'] == 'AUX' and first_word['token'] != 'being'):
-                        if (target_minority in ["women", "men"] or "folks" in target_minority or (isinstance(target_minority, str) and len(target_minority.split(',')) > 1)) and first_word['token'] == 'is':
+                        # verb does not match targets' number
+                        if (target_minority in ["women", "men"] or "folks" in target_minority or len(target_minority.split(',')) > 1) and first_word['token'] == 'is':
                             split_inference = ' '.join(inference.split(' ')[1:])
                             new_inferences.append(f'this post implies that {target_minority} are {split_inference}')
                             changed = True
                         else:
                             new_inferences.append(f'this post implies that {target_minority} {inference}')
                             changed = True
-
                     if first_word['token'] == "all":
                         new_inferences.append(f'this post implies that {target_minority} are {inference}')
                         changed = True
@@ -160,23 +161,23 @@ class aggregation_sbic:
                     if not changed:
                         new_inferences.append(f'this post implies that {inference}')
                     group_offensive += 1
+                if len(new_inferences) > 1:
+                    df.loc[i, "selectedStereotype"] = random.choice(new_inferences)
+                else:
+                    df.loc[i, "selectedStereotype"] = new_inferences[0]
 
-                if new_inferences:
-                    if len(new_inferences) > 1:
-                        df.loc[i, "selectedStereotype"] = random.choice(new_inferences)
-                    else:
-                        df.loc[i, "selectedStereotype"] = new_inferences[0]
             if offensive_label == 'offensive' and df.loc[i, "whoTarget"] == 0.0:
                 personal_attack += 1
+
             if offensive_label == 'not_offensive':
                 not_offensive += 1
         print("---------------------------------------------------")
         print(f"Split: {split}")
-        print(f"offensive_na_whotarget: {offensive_na_whotarget}")
-        print(f"Group attack but no implied statement: {group_attack_no_implied_statement}")
-        print(f"Personal attacks: {personal_attack}")
-        print(f"Group offensive: {group_offensive}")
-        print(f"Not offensive: {not_offensive}")
+        print(f"offensive_na_whotarget: {offensive_na_whotarget}")  # 0
+        print(f"Group attack but no implied statement: {group_attack_no_implied_statement}")  # 3
+        print(f"Personal attacks: {personal_attack}")  # 6082
+        print(f"Group offensive: {group_offensive}")  # 12008
+        print(f"Not offensive: {not_offensive}")  # 17411
         print("---------------------------------------------------")
         return df
 
