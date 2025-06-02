@@ -1,0 +1,31 @@
+# Using BASE_DIR: bestconfig
+# Using PARALLEL_SLOTS: 9
+--------------------
+# Commands grouped by parallel slot:
+# Slot 1
+python main.py --config "bestconfig/4.ang_f/IHC/s_smoothmax.yaml" "bestconfig/4.ang_f/SBIC/softmax.yaml"
+--------------------
+# Slot 2
+python main.py --config "bestconfig/4.ang_f/IHC/s_softmax.yaml" "bestconfig/2.ang/SBIC/mean.yaml"
+--------------------
+# Slot 3
+python main.py --config "bestconfig/2.ang/IHC/s_mean.yaml" "bestconfig/2.ang/SBIC/smoothmax.yaml"
+--------------------
+# Slot 4
+python main.py --config "bestconfig/2.ang/IHC/s_smoothmax.yaml" "bestconfig/contrastive/cont_1.yaml"
+--------------------
+# Slot 5
+python main.py --config "bestconfig/1.cos/IHC/s_mean.yaml" "bestconfig/contrastive/cont_2.yaml"
+--------------------
+# Slot 6
+python main.py --config "bestconfig/1.cos/IHC/s_softmax.yaml" "bestconfig/1.cos/SBIC/mean.yaml"
+--------------------
+# Slot 7
+python main.py --config "bestconfig/3.cos_f/IHC/s_smoothmax.yaml" "bestconfig/1.cos/SBIC/smoothmax.yaml"
+--------------------
+# Slot 8
+python main.py --config "bestconfig/3.cos_f/IHC/s_softmax.yaml" "bestconfig/3.cos_f/SBIC/smoothmax.yaml"
+--------------------
+# Slot 9
+python main.py --config "bestconfig/4.ang_f/SBIC/smoothmax.yaml"
+--------------------
