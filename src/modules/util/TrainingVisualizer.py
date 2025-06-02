@@ -10,16 +10,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-import os
-
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-import os
-
 
 class TrainingVisualizer:
     def __init__(self, history):
