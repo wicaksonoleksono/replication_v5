@@ -82,20 +82,19 @@ class SentenceTriplet(nn.Module):
             case "ang_f":                   d_p, d_n = self._additive_angular_distance, self._angular_distance
             case _:
                 raise ValueError(f"unknown d_fn {self.d_fn}")
-        use_rad = self.d_fn != "cos"
-        mine_m = self.margin_rad if use_rad else self.margin
         if self.d_fn == "cos":
             hinge_m = self.margin
+            mine_m = self.margin
         elif self.d_fn == "ang":
             hinge_m = self.margin_rad
+            mine_m = self.margin_rad
         else:
             hinge_m = 0.0
-
+            mine_m = 0.0
         d_ap = d_p(og_feat, ag_feat).diag()
         d_an = d_n(og_feat, og_feat)
         if self.d_fn not in ["cos", "ang"]:
             d_ap_no_marg = d_n(og_feat, ag_feat).diag()
-
         device, B = og_feat.device, og_feat.size(0)
         labels = labels.view(-1)
         eye_mask = ~torch.eye(B, dtype=torch.bool, device=device)
@@ -105,8 +104,8 @@ class SentenceTriplet(nn.Module):
             d_ap_upper = d_ap.unsqueeze(1)
         else:
             d_ap_lower = d_ap_upper = d_ap.unsqueeze(1)
-
         semi_mask = (d_ap_upper + mine_m > d_an) & (d_an > d_ap_lower) & valid_neg_mask
+
         d_an_semi = torch.where(semi_mask, d_an, torch.full_like(d_an, float('inf')))
         min_neg, _ = torch.min(d_an_semi, 1)
         valid = min_neg < float('inf')

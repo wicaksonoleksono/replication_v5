@@ -3,9 +3,9 @@ import torch.nn as nn
 # Credits https://github.com/HobbitLong/SupContrast
 
 
-class SupConLoss(nn.Module):
+class AngularCon(nn.Module):
     def __init__(self, temperature):
-        super(SupConLoss, self).__init__()
+        super(AngularCon, self).__init__()
         self.temperature = temperature
 
     def forward(self, features, labels=None, mask=None):
@@ -30,24 +30,16 @@ class SupConLoss(nn.Module):
             raise NotImplementedError
         contrast_feature = features
         anchor_feature = contrast_feature
-        # compute logits
-        anchor_dot_contrast = torch.div(
-            torch.matmul(anchor_feature, contrast_feature.T),
-            self.temperature)
-        logits_mask = torch.scatter(
-            torch.ones_like(mask),
-            1,
-            torch.arange(batch_size).view(-1, 1).to(device),
-            0
-        )
-        # it produces 1 for the non-matching places and 0 for matching places i.e its opposite of mask
+        dot = torch.matmul(anchor_feature, contrast_feature.T)
+        dot = torch.clamp(dot, -1.0 + 1e-7, 1.0 - 1e-7)
+        anchor_dot_contrast = -torch.acos(dot) / self.temperature
+        logits_mask = torch.scatter(torch.ones_like(mask), 1, torch.arange(batch_size).view(-1, 1).to(device), 0)
         mask = mask * logits_mask
         logits_max, _ = torch.max(anchor_dot_contrast, dim=1, keepdim=True)
         logits = anchor_dot_contrast - logits_max.detach()
         exp_logits = torch.exp(logits) * logits_mask
         log_prob = logits - torch.log(exp_logits.sum(1, keepdim=True))
         mean_log_prob_pos = (mask * log_prob).sum(1) / mask.sum(1)
-        # loss
         loss = -1 * mean_log_prob_pos
         loss = loss.mean()
         return loss

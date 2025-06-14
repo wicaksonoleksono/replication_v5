@@ -133,7 +133,7 @@ def train(device,
         ce = ce_fn(pred, og_label)
         if method in ["semi-hard", "cam"]:
             metric_loss = metric_fn(og_feat, ag_feat, og_label)
-        if method == "contrastive":
+        if method in ("contrastive", "angcon"):
             sup_feat = torch.cat([og_feat, ag_feat])
             metric_loss = metric_fn(sup_feat)
         if method == "SST":

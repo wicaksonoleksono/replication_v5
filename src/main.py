@@ -29,7 +29,7 @@ def process(config_path):
         methods_list = data_main_dict.get("methods")
         for method_dict in methods_list:
             method_name = method_dict["name"]
-            if method_name == "contrastive":
+            if method_name in ("contrastive", "angcon"):
                 temperatures = method_dict.get("temperatures")
                 # ------------------------------------------------------
                 #    CONTRASTIVE: product of (encoders, lr, lam, temperature)
@@ -188,7 +188,7 @@ def process(config_path):
                 assert b is None, f"For reducer '{r}', beta must be None."
             assert combo["distance_fn"] in ["ang", "cos", "ang_w", "cos_w", "ang_f", "cos_f", "ang_fw", "cos_fw"], \
                 f"Expected distance_fn to be either 'ang' or 'cos','chord','scaled_chord','maha' got {combo['distance_fn']}"
-        elif combo["method"] == "contrastive":
+        elif combo["method"] in ("contrastive", "angcon"):
             assert combo["temperature"] == 0.3, \
                 f"Expected temperature to be 0.3 for contrastive method, got {combo['temperature']}"
         elif combo["method"] == "cam":
@@ -257,7 +257,7 @@ def process(config_path):
                 f"{combo['reducer']}"
             )
             os.makedirs(combo['method_dir'], exist_ok=True)
-        elif combo['method'] in ["contrastive", "cam"]:
+        elif combo['method'] in ("contrastive", "cam", "angcon"):
             combo['method_dir'] = (
                 f"{output_base}.{combo['method']}."
                 f"{combo['data_main']}.{encoder_short_name}"
@@ -310,7 +310,7 @@ def process(config_path):
             # if combo["method"] == "semi-hard" else None,
             fallback=combo["fallback"],
             # Contrastive
-            # if combo["method"] == "contrastive" else None,
+            # if combo["method"] in ("contrastive", "angcon") else None,
             temperature=combo["temperature"],
             am=combo["cam_angular_margin_m"],
             a=combo["cam_lambda_a"],

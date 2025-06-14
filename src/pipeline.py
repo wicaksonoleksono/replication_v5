@@ -5,6 +5,7 @@ from modules import (set_seed,
                      get_dataloader_sbic,
                      prim_encoder_con,
                      SupConLoss,
+                     AngularCon,
                      SentenceTriplet,
                      SST,
                      CamLoss,
@@ -98,7 +99,7 @@ def pipeline(
     encoder_short_name = "bert" if "bert-base-uncased" in encoder_name else "hatebert"
     if method_dir is None:
         raise (ValueError(f"No such method dir{method_dir}"))
-    if method == "contrastive":
+    if method in ("contrastive", "angcon"):
         output_path = (
             f"{method_dir}/lr{learning_rate}_lam{lambda_weight}_temp{temperature}")
     elif method in ["semi-hard", "SST"]:
@@ -111,6 +112,7 @@ def pipeline(
     elif method == "cam":
         output_path = (
             f"{method_dir}/lr{learning_rate}_lam{lambda_weight}_a{a}_m{am}_r{r}")
+
     os.makedirs(output_path, exist_ok=True)
     model = prim_encoder_con(
         hidden_size=768,
@@ -121,6 +123,8 @@ def pipeline(
     ce_fn = nn.CrossEntropyLoss()
     if method == "contrastive":
         metric_fn = SupConLoss(temperature=temperature)
+    if method == "angcon":
+        metric_fn = AngularCon(temperature=temperature)
     if method == "cam":
         print(type(a), type(r), type(am))
         metric_fn = CamLoss(lambda_a=a, lambda_r=r, angular_margin_m=am, embedding_size=768, num_classes=2).to(device)
