@@ -11,10 +11,6 @@ class SentenceTriplet(nn.Module):
         self.eps = 1e-6
         self.margin, self.reducers = margin, reducers
         self.use_fallback, self.beta, self.d_fn = use_fallback, beta, d_fn
-        m_cos = torch.tensor(1.0 - margin, dtype=torch.float32)
-        m_cos = torch.clamp(m_cos, -1.0 + self.eps, 1.0 - self.eps)
-        # self.margin_rad = m_cos.clone().detach().requires_grad_(True),
-        self.margin_rad = torch.tensor(margin, dtype=torch.float32)
 
     def _cosine_sim(self, x, y):
         return torch.mm(x, y.T)
@@ -36,7 +32,7 @@ class SentenceTriplet(nn.Module):
     def _additive_angular_distance(self, x, y):
         cos = self._cosine_sim(x, y)
         sin = torch.sqrt(1 - cos.pow(2))
-        cos_m, sin_m = torch.cos(self.margin_rad), torch.sin(self.margin_rad)
+        cos_m, sin_m = torch.cos(self.margin), torch.sin(self.margin)
         phi = (cos * cos_m - sin * sin_m).clamp(-1+self.eps, 1-self.eps)
         return torch.acos(phi)
 
@@ -82,12 +78,9 @@ class SentenceTriplet(nn.Module):
             case "ang_f":                   d_p, d_n = self._additive_angular_distance, self._angular_distance
             case _:
                 raise ValueError(f"unknown d_fn {self.d_fn}")
-        if self.d_fn == "cos":
+        if self.d_fn in ["cos", "ang"]:
             hinge_m = self.margin
             mine_m = self.margin
-        elif self.d_fn == "ang":
-            hinge_m = self.margin_rad
-            mine_m = self.margin_rad
         else:
             hinge_m = 0.0
             mine_m = 0.0
@@ -105,7 +98,6 @@ class SentenceTriplet(nn.Module):
         else:
             d_ap_lower = d_ap_upper = d_ap.unsqueeze(1)
         semi_mask = (d_ap_upper + mine_m > d_an) & (d_an > d_ap_lower) & valid_neg_mask
-
         d_an_semi = torch.where(semi_mask, d_an, torch.full_like(d_an, float('inf')))
         min_neg, _ = torch.min(d_an_semi, 1)
         valid = min_neg < float('inf')

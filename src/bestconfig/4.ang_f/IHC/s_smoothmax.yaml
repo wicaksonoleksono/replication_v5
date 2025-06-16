@@ -18,8 +18,8 @@ data_mains:
         fallback: [!!bool true]
         margins: [!!float 0.3]
         reducers:
-          - name: "softmax"
-            beta_values: [!!int 10]
+          - name: ["softmax"]
+            beta: [!!int 10]
 # reducers            : softmax
 # lambda weights      : 0.25
 
